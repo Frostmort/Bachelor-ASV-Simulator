@@ -19,9 +19,13 @@ from ctrl_PotField import PotentialFields
 from ctrl_astar import AStar
 from ctrl_purepursuit import PurePursuit
 from ctrl_constant_bearing import ConstantBearing
+# from ctrl_VO import VO
+# from ctrl_AWC import AWC
 
 from matplotlib2tikz import save as tikz_save
 
+
+# noinspection PyUnreachableCode
 class Scenario(object):
     def __init__(self, mapname, ctrlnames, scenname, name='s1'):
 
@@ -51,7 +55,16 @@ class Scenario(object):
             # Follower
             x0f = np.array([120.,110,-np.pi,1.5,0,0])
             xgf = np.array([250,110,0])
-            ppf  = PurePursuit(mode='pursuit')
+            ppf = PurePursuit(mode='pursuit')
+
+        elif scenname == "VO_test":
+            # Vessel 1 (Main vessel)
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
+
+            # Vessel 2 (WAFI)
+            x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
+            xg2 = np.array([0, 80, 0])
 
         else:
             # Vessel 1 (Main vessel)
@@ -104,6 +117,21 @@ class Scenario(object):
                         vesseltype='viknes')
             vf.u_d = 2.5
             vessels.append(vf)
+
+        elif scenname == "VO_test":
+            controllers2 = []
+            controllers2.append(AStar(x02, xg2, the_map))
+            controllers2.append(LOSGuidance(switch_criterion="progress"))
+            v2 = Vessel(x02,
+                        xg2,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        controllers2,
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            v2.u_d = 2.5
+            vessels.append(v2)
 
         self.world = World(vessels, the_map)
 
@@ -704,7 +732,7 @@ if __name__ == "__main__":
 
 
         #map,controller,scene
-    scen = Scenario("tæst", ["hastar"], "s2")
+    scen = Scenario("blank", ["astar"], "VO_test")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

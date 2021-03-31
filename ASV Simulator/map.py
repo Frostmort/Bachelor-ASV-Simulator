@@ -143,6 +143,9 @@ class Map(object):
                                         (42.58, 19.27)], safety_region_length)]
             self._dim = [160,160]
 
+        elif maptype == 'blank':
+            self._dim = [160,160]
+
         self._is_discretized = False
         self._gridsize = gridsize
         self._grid = None

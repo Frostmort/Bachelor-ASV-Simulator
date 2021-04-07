@@ -19,8 +19,8 @@ from ctrl_PotField import PotentialFields
 from ctrl_astar import AStar
 from ctrl_purepursuit import PurePursuit
 from ctrl_constant_bearing import ConstantBearing
-# from ctrl_VO import VO
-# from ctrl_AWC import AWC
+from ctrl_VO import VO
+from ctrl_AWC import AWC
 
 from matplotlib2tikz import save as tikz_save
 
@@ -94,7 +94,7 @@ class Scenario(object):
                 controllers.append(HybridAStar(x01, xg1, the_map))
                 controllers.append(LOSGuidance(switch_criterion="progress"))
 
-        v0 = Vessel(x01,
+        v1 = Vessel(x01,
                     xg1,
                     self.h,
                     self.dT,
@@ -103,10 +103,10 @@ class Scenario(object):
                     is_main_vessel=True,
                     vesseltype='viknes')
 
-        vessels = [v0]
+        vessels = [v1]
 
         if scenname == "s3":
-            ppf.cGoal = v0.x
+            ppf.cGoal = v1.x
             vf = Vessel(x0f,
                         xgf,
                         self.h,
@@ -689,7 +689,7 @@ def harry_anim(sim):
     ax2.grid()
 
     Writer = animation.writers['ffmpeg']
-    writer = Writer(fps=33, metadata=dict(artist='Thomas Stenersen'), bitrate=1800)
+    writer = Writer(fps=33, bitrate=1800)
     ani.save(sim.scenario.name+'.mp4', writer=writer)
     plt.show()
 

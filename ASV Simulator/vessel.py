@@ -293,12 +293,12 @@ class VesselModel(object):
             self.d2v = 330.0
             self.d2r = 0.0
 
-            self.m   = 3300.0
-            self.Iz  = 1320.0
+            self.m   = 3300.0  # Mass
+            self.Iz  = 1320.0  # z-axis moment of inertia
 
-            self.lr  = 4.0
-            self.Fxmax = 2310.0
-            self.Fymax = 28.8
+            self.lr  = 4.0  # Rudder length
+            self.Fxmax = 2310.0  # Max framdrift
+            self.Fymax = 28.8  # Max svingkraft
 
             self.Kp_p = 0.1
             self.Kp_psi = 5.0

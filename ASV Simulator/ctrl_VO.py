@@ -10,3 +10,6 @@ from utils import Controller, PriorityQueue
 
 from matplotlib2tikz import save as tikz_save
 
+
+class VO(Controller):
+    pass

@@ -42,6 +42,7 @@ class Simulation(object):
         for t in np.linspace(0, self.tend, self.N):
             """The actual simulation"""
 
+
             self.scenario.world.update_world(t, self.n)
 
             if self.axarr:

@@ -34,7 +34,7 @@ class Scenario(object):
         self.tend = 150   # Simulation time (seconds)
         self.h    = 0.05  # Integrator time step
         self.dT   = 0.5   # Controller time step
-        self.N    = int(np.around(self.tend / self.h)) + 1
+        self.N    = int(np.around(self.tend / self.h)) + 1 # Number of simulation steps
         N2 = int(self.tend/self.dT) + 1
 
         if scenname == "s1":
@@ -59,7 +59,7 @@ class Scenario(object):
 
         elif scenname == "VO_test":
             # Vessel 1 (Main vessel)
-            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
             xg1 = np.array([75, 150, 0])
 
             # Vessel 2 (WAFI)

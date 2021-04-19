@@ -35,7 +35,7 @@ class World(object):
         for v in self._vessels:
             v.time = t
             v.update_model(n)
-            if int(t*100)%int(v.dT*100) == 0:
+            if int(t*100)%int(v.dT*100) == 0:  # Always true with dT = 0.5
                 v.update_controllers()
 
     def is_occupied_list(self, lst, tlst):

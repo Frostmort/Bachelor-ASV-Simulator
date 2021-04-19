@@ -84,7 +84,7 @@ class LOSGuidance(Controller):
         xk = self.wp[self.cWP][0]
         yk = self.wp[self.cWP][1]
 
-        # Eq. (10.10), [Fossen, 2011]
+        # Cross track error from Eq. (10.10), [Fossen, 2011]
         e  = -(x - xk)*np.sin(self.Xp) + (y - yk)*np.cos(self.Xp)
 
         Xr = np.arctan2( -e, self.de)

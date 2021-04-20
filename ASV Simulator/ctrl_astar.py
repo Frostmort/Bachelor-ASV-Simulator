@@ -23,7 +23,7 @@ class AStar(Controller):
 
         self.to_be_updated = True
 
-    def update(self, vobj):
+    def update(self, vobj, vesselArray):
         if self.to_be_updated:
             tic = time.process_time()
             vobj.waypoints = self.search(vobj)

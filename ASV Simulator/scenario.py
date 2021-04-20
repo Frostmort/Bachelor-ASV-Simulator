@@ -94,6 +94,7 @@ class Scenario(object):
                 controllers.append(HybridAStar(x01, xg1, the_map))
                 controllers.append(LOSGuidance(switch_criterion="progress"))
 
+        controllers.append(VO())
         v1 = Vessel(x01,
                     xg1,
                     self.h,

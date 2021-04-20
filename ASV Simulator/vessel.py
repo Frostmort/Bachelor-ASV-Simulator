@@ -105,10 +105,11 @@ class Vessel(object):
     def update_model(self, n):
         self.path[n] = self.model.update(self.u_d, self.psi_d, self.r_d)
 
-    def update_controllers(self):
+    def update_controllers(self, vesselArray):
         """Updates all the vessels controllers."""
+        vessels = vesselArray
         for ctrl in self.controllers:
-            ctrl.update(self)
+            ctrl.update(self, vesselArray = vessels)
 
     def get_simulation_data(self, n):
         """Returns a list of various simulation data (path length, power usage, etc.) """

@@ -25,7 +25,7 @@ class Wafi(Controller):
 
         self.wps = None
 
-    def update(self, vobj):
+    def update(self, vobj, vesselArray):
         if not self.is_initialized:
             # Reference to the vessel object's waypoints
             self.wps = vobj.waypoints

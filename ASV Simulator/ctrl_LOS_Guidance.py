@@ -5,6 +5,7 @@ from matplotlib.patches import Circle
 
 from utils import Controller
 
+
 class LOSGuidance(Controller):
     """This class implements  """
     def __init__(self, R2=20**2, u_d = 3.0, switch_criterion='circle'):

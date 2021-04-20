@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-
+import random
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -33,7 +33,6 @@ class Vessel(object):
         self.psi_d = np.Inf
         self.u_d   = 0
         self.r_d   = 0
-
 
 
         self.time = 0.0
@@ -73,6 +72,19 @@ class Vessel(object):
                                       ( 3*self._length/8,  self._breadth/2),
                                       ( self._length/2,  0              ),
                                       ( 3*self._length/8, -self._breadth/2)])
+
+        elif vesseltype == 'wafi':
+            self._scale = 1.0 / 20.0
+            self._length = 60.0 * self._scale
+            self._breadth = 14.5 * self._scale
+            self.model = VesselModel(x0, h, vesseltype)
+            # Vertices of a polygon.
+            self._shape = np.asarray([(-self._length / 2, -self._breadth / 2),
+                                      (-self._length / 2, self._breadth / 2),
+                                      (self._length / 3, self._breadth / 2),
+                                      (self._length / 2, 0),
+                                      (self._length / 3, -self._breadth / 2)])
+
 
         else:
             print("Error in selection of vessel! You tried: ", vesseltype)
@@ -293,12 +305,12 @@ class VesselModel(object):
             self.d2v = 330.0
             self.d2r = 0.0
 
-            self.m   = 3300.0
-            self.Iz  = 1320.0
+            self.m   = 3300.0  # Mass
+            self.Iz  = 1320.0  # z-axis moment of inertia
 
-            self.lr  = 4.0
-            self.Fxmax = 2310.0
-            self.Fymax = 28.8
+            self.lr  = 4.0  # Rudder length
+            self.Fxmax = 2310.0  # Max framdrift
+            self.Fymax = 28.8  # Max svingkraft
 
             self.Kp_p = 0.1
             self.Kp_psi = 5.0
@@ -326,6 +338,26 @@ class VesselModel(object):
             self.Kd_psi = 1.0
             self.Kp_r   = 8.0
 
+        elif vessel_model == 'wafi':
+            # Set model parameters
+            self.d1u = 16.6
+            self.d1v = 9900.0
+            self.d1r = 330.0
+            self.d2u = 8.25
+            self.d2v = 330.0
+            self.d2r = 0.0
+
+            self.m   = 3300.0
+            self.Iz  = 1320.0
+
+            self.lr  = 4.0
+            self.Fxmax = 2310.0
+            self.Fymax = 28.8
+
+            self.Kp_p = 0.1
+            self.Kp_psi = 5.0
+            self.Kd_psi = 1.0
+            self.Kp_r   = 8.0
 
         # Values other algorithms can use to get information about the model
 
@@ -413,7 +445,7 @@ if __name__ == "__main__":
     axes.set_ylim(-5,5)
     x0 = np.array([0,0,np.pi/4,0,0,0])
     xg = np.array([0,0,0])
-    myVessel = Vessel(x0, xg, 0.1, 0.1, 1, [], True, 'viknes')
+    myVessel = Vessel(x0, xg, 0.1, 0.1, 1, [], True, 'wafi')
     myVessel.draw_patch(axes, x0, 'b', 'k')
 
     axes.arrow(0,0,3.5,3.5,

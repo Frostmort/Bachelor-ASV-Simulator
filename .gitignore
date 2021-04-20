@@ -122,3 +122,21 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+ASV Simulator/.idea/
+
+ASV Simulator/s2-hastar-metadata.txt
+
+ASV Simulator/s2-astar-vessel.txt
+
+ASV Simulator/s2-hastar-vessel.npy
+
+ASV Simulator/s2-astar-metadata.txt
+
+ASV Simulator/s2-astar-vessel.npy
+
+ASV Simulator/s2-hastar-vessel.txt
+
+*.mp4
+
+*.xml

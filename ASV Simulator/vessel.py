@@ -117,10 +117,11 @@ class Vessel(object):
     def update_model(self, n):
         self.path[n] = self.model.update(self.u_d, self.psi_d, self.r_d)
 
-    def update_controllers(self):
+    def update_controllers(self, vesselArray):
         """Updates all the vessels controllers."""
+        vessels = vesselArray
         for ctrl in self.controllers:
-            ctrl.update(self)
+            ctrl.update(self, vesselArray = vessels)
 
     def get_simulation_data(self, n):
         """Returns a list of various simulation data (path length, power usage, etc.) """
@@ -421,9 +422,11 @@ class VesselModel(object):
 
         Rz = np.array([[ np.cos(self.x[2]),-np.sin(self.x[2]), 0],
                        [ np.sin(self.x[2]), np.cos(self.x[2]), 0],
-                       [ 0                , 0                , 1]])
+                       [ 0                , 0                , 1]]) # Rotation matrix about z axis
 
+        # ηdot * integrator = position and orientation matrix η
         self.x[0:3] += self.h * np.dot(Rz, self.x[3:6])
+        # acceleration matrix * integrator = velocity matrix
         self.x[3:6] += self.h * np.dot(np.diag([1/self.m, 1/self.m, 1/self.Iz]),
                                        self.Tau(u_d, psi_d, r_d) - self.Cvv() - self.Dvv())
 

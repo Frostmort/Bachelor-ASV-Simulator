@@ -20,7 +20,7 @@ class Controller(object):
     def __init__(self):
         pass
 
-    def update(self, vobj):
+    def update(self, vobj, vesselArray):
         pass
 
     def draw(self, axes, N, fcolor, ecolor):

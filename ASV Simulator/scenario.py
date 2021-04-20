@@ -19,7 +19,7 @@ from ctrl_PotField import PotentialFields
 from ctrl_astar import AStar
 from ctrl_purepursuit import PurePursuit
 from ctrl_constant_bearing import ConstantBearing
-from ctrl_wafi import wafi
+from ctrl_wafi import Wafi
 from ctrl_VO import VO
 from ctrl_AWC import AWC
 
@@ -69,12 +69,13 @@ class Scenario(object):
 
         elif scenname == "wafi":
             # Vessel 1 (Main vessel)
-            x01 = np.array([75, 0.0, np.pi / 2, 2.5, 0, 0])
-            xg1 = np.array([75, 150, 0])
+            x01 = np.array([80, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([80, 150, 0])
 
             # Vessel 2 (WAFI)
-            x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
-            xg2 = np.array([0, 80, 0])
+            x0f = np.array([80, 80, np.pi*1.5, 2.5, 0, 0])
+            xgf = np.array([250, 10, 0])
+            ppf = Wafi(mode='wafi')
 
         else:
             # Vessel 1 (Main vessel)
@@ -144,19 +145,17 @@ class Scenario(object):
             vessels.append(v2)
 
         elif scenname == "wafi":
-            controllers2 = []
-            controllers2.append(AStar(x02, xg2, the_map))
-            controllers2.append(LOSGuidance(switch_criterion="progress"))
-            v2 = Vessel(x02,
-                        xg2,
+            ppf.cGoal = v1.x
+            vf = Vessel(x0f,
+                        xgf,
                         self.h,
                         self.dT,
                         self.N,
-                        controllers2,
+                        [ppf],
                         is_main_vessel=False,
                         vesseltype='viknes')
-            v2.u_d = 2.5
-            vessels.append(v2)
+            vf.u_d = 2
+            vessels.append(vf)
         self.world = World(vessels, the_map)
 
         return
@@ -681,8 +680,8 @@ class Scenario(object):
             x0f = np.array([120., 110, -np.pi, 1.5, 0, 0])
             xgf = np.array([250, 110, 0])
 
-            pp = PurePursuit(mode='wafi')
-            pp.cGoal = vobj.x
+            pp = Wafi(mode='wafi')
+            pp.cGoal = 0
             vobj3 = Vessel(x0f, xgf, self.h, self.dT, self.N, [pp], is_main_vessel=False, vesseltype='wafi')
             vobj3.u_d = 2.5
 

@@ -73,7 +73,7 @@ class Vessel(object):
                                       ( self._length/2,  0              ),
                                       ( 3*self._length/8, -self._breadth/2)])
 
-        if vesseltype == 'wafi':
+        elif vesseltype == 'wafi':
             self._scale = 1.0 / 20.0
             self._length = 60.0 * self._scale
             self._breadth = 14.5 * self._scale

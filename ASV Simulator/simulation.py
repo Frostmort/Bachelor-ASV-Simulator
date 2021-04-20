@@ -42,6 +42,7 @@ class Simulation(object):
         for t in np.linspace(0, self.tend, self.N):
             """The actual simulation"""
 
+
             self.scenario.world.update_world(t, self.n)
 
             if self.axarr:
@@ -67,7 +68,7 @@ class Simulation(object):
         arr = self.scenario.world.get_simulation_data(self.n) + arr
 
         print(self.scenario.name)
-        print("Distance\tAvgVel\tVarVel\tVarPsi\tTime\tCPU Time")
+        print("Distance\tAvgVel\tVarVel\tVarPsi\tTime\tCPU Time\tShipDelta")
         s = '\t'.join(format(x,".4f") for x in arr)
         print(s)
 

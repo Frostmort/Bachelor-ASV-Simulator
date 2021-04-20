@@ -5,6 +5,7 @@ from matplotlib.patches import Circle
 
 from utils import Controller
 
+
 class LOSGuidance(Controller):
     """This class implements  """
     def __init__(self, R2=20**2, u_d = 3.0, switch_criterion='circle'):
@@ -35,10 +36,10 @@ class LOSGuidance(Controller):
             np.abs((self.wp[self.cWP+1][0] - x)*np.cos(self.Xp) + \
                    (self.wp[self.cWP+1][1] - y)*np.sin(self.Xp)) < self.R
 
-    def update(self, vessel_object):
+    def update(self, vobj, vesselArray):
         if not self.wp_initialized:
-            if vessel_object.waypoints.any():
-                self.wp = vessel_object.waypoints
+            if vobj.waypoints.any():
+                self.wp = vobj.waypoints
                 self.nWP = len(self.wp[:,0])
 
                 if self.nWP < 2:
@@ -48,11 +49,11 @@ class LOSGuidance(Controller):
                     self.wp_initialized = True
                     self.Xp = np.arctan2(self.wp[self.cWP + 1][1] - self.wp[self.cWP][1],
                                          self.wp[self.cWP + 1][0] - self.wp[self.cWP][0])
-                    vessel_object.current_goal = self.wp[self.cWP+1]
+                    vobj.current_goal = self.wp[self.cWP + 1]
 
 
-        x = vessel_object.x[0]
-        y = vessel_object.x[1]
+        x = vobj.x[0]
+        y = vobj.x[1]
 
         if self.switching_criterion(x, y):
             while self.switching_criterion(x,y):
@@ -64,7 +65,7 @@ class LOSGuidance(Controller):
                     # print"Next waypoint: (%.2f, %.2f)" % (self.wp[self.cWP+1][0],
                     #                                        self.wp[self.cWP+1][1])
                     self.cWP += 1
-                    vessel_object.current_goal = self.wp[self.cWP+1]
+                    vobj.current_goal = self.wp[self.cWP + 1]
                     self.Xp = np.arctan2(self.wp[self.cWP + 1][1] - self.wp[self.cWP][1],
                                          self.wp[self.cWP + 1][0] - self.wp[self.cWP][0])
                 else:
@@ -75,7 +76,7 @@ class LOSGuidance(Controller):
                                                                       self.wp[self.cWP][0],
                                                                       self.wp[self.cWP][1]))
                         print("Last Waypoint reached!")
-                        vessel_object.u_d = 0.0
+                        vobj.u_d = 0.0
                         self.R2 = np.Inf
                     return
 
@@ -83,14 +84,14 @@ class LOSGuidance(Controller):
         xk = self.wp[self.cWP][0]
         yk = self.wp[self.cWP][1]
 
-        # Eq. (10.10), [Fossen, 2011]
+        # Cross track error from Eq. (10.10), [Fossen, 2011]
         e  = -(x - xk)*np.sin(self.Xp) + (y - yk)*np.cos(self.Xp)
 
         Xr = np.arctan2( -e, self.de)
         psi_d = self.Xp + Xr
 
-        vessel_object.psi_d = psi_d
-        vessel_object.u_d   = self.u_d
+        vobj.psi_d = psi_d
+        vobj.u_d   = self.u_d
 
     def visualize(self, fig, axarr, t, n):
         axarr[0].plot(self.wp[:,0], self.wp[:,1], 'k--')

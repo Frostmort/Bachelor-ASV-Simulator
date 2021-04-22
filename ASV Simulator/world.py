@@ -46,8 +46,8 @@ class World(object):
     def getMinDistance(self):
         v1 = self._vessels[0]
         v2 = self._vessels[1]
-        xd = abs(v1.x[0] - v2.x[0])
-        yd = abs(v1.x[1] - v2.x[1])
+        xd = v2.x[0] - v1.x[0]
+        yd = v2.x[1] - v1.x[1]
         d = math.sqrt(xd**2 + yd**2)
         if d < self.minDistance:
             return d

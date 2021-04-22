@@ -19,6 +19,7 @@ from ctrl_PotField import PotentialFields
 from ctrl_astar import AStar
 from ctrl_purepursuit import PurePursuit
 from ctrl_constant_bearing import ConstantBearing
+from ctrl_wafi import Wafi
 from ctrl_VO import VO
 from ctrl_AWC import AWC
 
@@ -65,6 +66,16 @@ class Scenario(object):
             # Vessel 2 (WAFI)
             x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
             xg2 = np.array([0, 80, 0])
+
+        elif scenname == "wafi":
+            # Vessel 1 (Main vessel)
+            x01 = np.array([80, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([80, 150, 0])
+
+            # Vessel 2 (WAFI)
+            x0f = np.array([80, 80, np.pi*1.5, 2.5, 0, 0])
+            xgf = np.array([250, 10, 0])
+            ppf = Wafi(mode='wafi')
 
         else:
             # Vessel 1 (Main vessel)
@@ -134,6 +145,18 @@ class Scenario(object):
             v2.u_d = 2.5
             vessels.append(v2)
 
+        elif scenname == "wafi":
+            ppf.cGoal = v1.x
+            vf = Vessel(x0f,
+                        xgf,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        [ppf],
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            vf.u_d = 2
+            vessels.append(vf)
         self.world = World(vessels, the_map)
 
         return
@@ -636,6 +659,35 @@ class Scenario(object):
             vobj.waypoints = np.array([(50.,50.), (50., 0.), (100., 100.)])
             self.world = World([vobj], the_map)
 
+        elif name=='wafi':
+            self.tend = 80  # Simulation time (seconds)
+            self.h = 0.05  # Integrator time step
+            self.dT = 0.5  # Controller time step
+            self.N = int(np.around(self.tend / self.h)) + 1
+
+            N2 = int(self.tend / self.dT) + 1
+
+            # Vessel 1 (Main vessel)
+            x01 = np.array([100.0, 0.0, 3.14 / 4, 2.5, 0, 0])
+            xg1 = np.array([80, 145, 0])
+
+            astar = AStar(x01, xg1, the_map)
+            pp = PurePursuit(R2=50)
+
+            vobj = Vessel(x01, xg1, self.h, self.dT, self.N, [astar, pp], is_main_vessel=True, vesseltype='viknes')
+            # v1.goal = np.array([140, 140, 0])
+
+            # Follower
+            x0f = np.array([120., 110, -np.pi, 1.5, 0, 0])
+            xgf = np.array([250, 110, 0])
+
+            pp = Wafi(mode='wafi')
+            pp.cGoal = 0
+            vobj3 = Vessel(x0f, xgf, self.h, self.dT, self.N, [pp], is_main_vessel=False, vesseltype='wafi')
+            vobj3.u_d = 2.5
+
+            self.world = World([vobj, vobj3], the_map)
+
         else:
             print("You might have spelled the scenario name wrong...")
             self.tend = 0
@@ -733,13 +785,13 @@ if __name__ == "__main__":
 
 
         #map,controller,scene
-    scen = Scenario("blank", ["astar"], "VO_test")
+    scen = Scenario("blank", ["astar"], "wafi")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()
     #plt.show()
     harry_plotter(sim)
-    #harry_anim(sim)
+    harry_anim(sim)
     plt.show()
 
 

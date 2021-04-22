@@ -68,7 +68,7 @@ class Simulation(object):
         arr = self.scenario.world.get_simulation_data(self.n) + arr
 
         print(self.scenario.name)
-        print("Distance\tAvgVel\tVarVel\tVarPsi\tTime\tCPU Time\tShipDelta")
+        print("Distance\tAvgVel\tVarVel\tVarPsi\tMinDist\tTime\tCPU Time")
         s = '\t'.join(format(x,".4f") for x in arr)
         print(s)
 

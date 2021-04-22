@@ -16,18 +16,15 @@ class VO(Controller):
     def __init__(self, scanDistance = 50):
         self.scanDistance = scanDistance
         self.VOarray = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.aboutToCollide = False
+        self.collision = False
 
     def update(self, vobj, vesselArray):
 
         for v in vesselArray:
             if not v.is_main_vessel:
                 self.scan(vobj, v)
-
-        if self.aboutToCollide:
-            self.dont(vobj)
-
-
+                if self.collision:
+                    self.collisionAvoidance(vobj, v)
 
     def scan(self, vessel1, vessel2):
         xd = (vessel2.x[0] - vessel1.x[0])
@@ -66,11 +63,26 @@ class VO(Controller):
         self.VOarray[8] = np.arctan2(self.VOarray[7][1], self.VOarray[7][0])
 
         if self.VOarray[3] > self.VOarray[8] > self.VOarray[4]:
-            self.aboutToCollide = True
+            self.collision = True
             print("Collision imminent!")
         else:
-            self.aboutToCollide = False
+            self.collision = False
 
-    def dont(self, vobj):
+    def collisionAvoidance(self, v1, v2):
 
-        vobj.psi_d = 0
+        xyc = self.getCollisionSpot(v1, v2)
+        tc = self.getCollisionTime(xyc)
+
+
+    def getCollisionX(self, v1, v2):
+        xc  = ((v2.x[1] - v1.x[1]) - (v2.x[0]*np.tan(v2.x[2]) - v1.x[0]*np.tan[v1.x[2]])) \
+               / (np.tan(v1.x[2]) - np.tan(v2.x[2]))
+        yc = ((v2.x[0] - v1.x[0]) - (v2.x[1]*(1/np.tan(v2.x[2])) - v1.x[1]*(1/np.tan(v1.x[2])))) \
+                / ((1/np.tan(v1.x[2])) - (1/np.tan(v2.x[2])))
+
+        return [xc, yc]
+
+
+    def getCollisionTime(self, xyc):
+        pass
+

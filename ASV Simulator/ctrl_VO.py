@@ -13,7 +13,7 @@ from matplotlib2tikz import save as tikz_save
 
 
 class VO(Controller):
-    def __init__(self, scanDistance = 50):
+    def __init__(self, scanDistance = 50, vesselArray):
         self.scanDistance = scanDistance
         self.VOarray = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.collision = False
@@ -70,11 +70,16 @@ class VO(Controller):
 
     def collisionAvoidance(self, v1, v2):
 
-        xyc = self.getCollisionSpot(v1, v2)
-        tc = self.getCollisionTime(xyc)
+        #xyc = self.getCollisionPoint(v1, v2)
+        xyc = [0, 0]
+        tc = self.getCollisionTime(v1, v2, xyc)
+        RAV = self.getRAV()
 
 
-    def getCollisionX(self, v1, v2):
+
+
+
+    def getCollisionPoint(self, v1, v2):
         xc  = ((v2.x[1] - v1.x[1]) - (v2.x[0]*np.tan(v2.x[2]) - v1.x[0]*np.tan[v1.x[2]])) \
                / (np.tan(v1.x[2]) - np.tan(v2.x[2]))
         yc = ((v2.x[0] - v1.x[0]) - (v2.x[1]*(1/np.tan(v2.x[2])) - v1.x[1]*(1/np.tan(v1.x[2])))) \
@@ -83,6 +88,14 @@ class VO(Controller):
         return [xc, yc]
 
 
-    def getCollisionTime(self, xyc):
-        pass
+    def getCollisionTime(self, v1, v2, xyc):
+        r1 = ([v1.x[0], v1.x[3] * np.cos(v1.x[2])], [v1.x[1], v1.x[3] * np.sin(v1.x[2])])
+        r2 = ([v2.x[0], v2.x[3] * np.cos(v2.x[2])], [v2.x[1], v2.x[3] * np.sin(v2.x[2])])
 
+        tx = -(r1[0:0] - r2[0:0])/(r1[0:1] - r2[0:1])
+        ty = -(r1[1:0] - r2[1:0])/(r1[1:1] - r2[1:1])
+
+        return (tx + ty)/2
+
+    def getRAV(self, v1):
+        pass

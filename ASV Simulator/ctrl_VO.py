@@ -28,9 +28,9 @@ class VO(Controller):
                     VOarray = self.createVO(vobj, vessel2, scanData)
                     if VOarray[3] > VOarray[8] > VOarray[4]:
                         print("Collision imminent!")
-                        newDirection = self.collisionAvoidance(vobj, v, scanData)
-                        vobj.u_d = newDirection[3]
-                        vobj.psi_d = newDirection[4]
+                        newDirection = self.collisionAvoidance(vobj, vessel2, scanData)
+                        vobj.u_d = newDirection.x[3]
+                        vobj.psi_d = newDirection.x[4]
 
 
 
@@ -131,11 +131,14 @@ class VO(Controller):
         return [maxstraight, maxreverse, maxstarboard, maxport]
 
     def getRAV(self, v1, v2, RV, scanData):
+        vessel1 = v1
+        vessel2 = v2
+        print(vessel2.x)
         maxstarangle = np.arctan2(RV[2][1], RV[2][0])
         maxportangle = np.arctan2(RV[3][0], RV[3][0])
-        testVessel = v1.x
+        testVessel = vessel1
 
-        testVessel[3] = 0
-        testVO = self.createVO(testVessel, v2, scanData)
+        testVessel.x[3] = 0
+        testVO = self.createVO(testVessel, vessel2, scanData)
         if not testVO[3] > testVO[8] > testVO[4]:
             return testVessel

@@ -9,96 +9,147 @@ from map import Map
 from utils import Controller
 from vessel import Vessel
 
+DIMENSIONS = 2  # Number of dimensions
+GLOBAL_BEST = 0  # Global Best of Cost function
+B_LO = -5  # Upper boundary of search space
+B_HI = 5  # Upper boundary of search space
+
+POPULATION = 20  # Number of particles in the swarm
+V_MAX = 0.1  # Maximum velocity value
+PERSONAL_C = 2.0  # Personal coefficient factor
+SOCIAL_C = 2.0  # Social coefficient factor
+CONVERGENCE = 0.001  # Convergence value
+MAX_ITER = 100  # Maximum number of iterrations
+
 
 class Mopso(Controller):
-    def __init__(self, x0, xg, the_map, maxiter=150, w=0.5, c1=1.5, c2=0.9, max_=0.9, min_=0.2,
-                 swarmsize=100):
-        self.start = x0[0:3]
-        self.goal = xg[0:3]
-        self.world = the_map
+    def __init__(self, x0, xg, mymap, ):
+        self.particles = []  # List of particles in the swarm
+        self.best_pos = None  # Best particle of the swarm
+        self.best_pos_z = np.inf  # Best particle of the swarm
 
-        self.w, self.c1, self.c2 = w, c1, c2  # weight,individual best score, global best score
-        self.psize = 5              # number of decision variables
-        self.searchrange = [-1, 1]  # Search range
-        self.swarmsize = swarmsize  # Number of particles
-        self.maxiter = maxiter  # Number of iterations
-        self.vmax = (max_ - min_) * 0.05  # Maximum speed
-        self.vmin = (max_ - min_) * 0.05 * (-1)  # Minimum speed
-        self.vesselArray = vesselArray
-        self.is_initialized = False
-        self.x = []
-        self.v = []
-        self.best_all = []
+    def update(self, vesselarray):
+        print('promp')
 
-    def update(self,vesselArray):                   #main loop for search
-        vesselarray=vesselArray
+        # Initialize plotting variables
+        x = np.linspace(B_LO, B_HI, 50)
+        y = np.linspace(B_LO, B_HI, 50)
+        X, Y = np.meshgrid(x, y)
+        fig = plt.figure("Particle Swarm Optimization")
 
+        # Initialize swarm
+        swarm = Swarm(POPULATION, V_MAX)
 
-        if not self.is_initialized:
-            self.initialize_swarm(self.swarmsize, self.psize)
-            self.is_initialized = True
-        fitness = self.calculate_fitness(self.x, self.v)
-        self.update_particles(self.x, self.v)
-        self.calculate_fitness(self.x, self.v)
+        # Initialize inertia weight
+        inertia_weight = 0.5 + (np.random.rand() / 2)
 
+        curr_iter = 0
+        while curr_iter < MAX_ITER:
 
+            fig.clf()
+            ax = fig.add_subplot(1, 1, 1)
+            ac = ax.contourf(X, Y, self.cost_function(X, Y), cmap='viridis')
+            fig.colorbar(ac)
 
+            for particle in swarm.particles:
 
-    def initialize_swarm(self, swarmsize, psize):
-        for j in range(swarmsize):
-            self.x.append([random.random() for i in range(psize)])
-            self.v.append([random.random() for m in range(psize)])
+                for i in range(0, DIMENSIONS):
+                    r1 = np.random.uniform(0, 1)
+                    r2 = np.random.uniform(0, 1)
 
+                    # Update particle's velocity
+                    personal_coefficient = PERSONAL_C * r1 * (particle.best_pos[i] - particle.pos[i])
+                    social_coefficient = SOCIAL_C * r2 * (swarm.best_pos[i] - particle.pos[i])
+                    new_velocity = inertia_weight * particle.velocity[i] + personal_coefficient + social_coefficient
 
-    def calculate_fitness(self, x, v):
-        fitness = [self.fun(x[j]) for j in range(self.swarmsize)]
-        p = x
-        best = min(fitness)
-        pg = x[fitness.index(min(fitness))]
-        best_all = []
-        return p, best, pg, best_all
+                    # Check if velocity is exceeded
+                    if new_velocity > V_MAX:
+                        particle.velocity[i] = V_MAX
+                    elif new_velocity < -V_MAX:
+                        particle.velocity[i] = -V_MAX
+                    else:
+                        particle.velocity[i] = new_velocity
 
-    def update_particles(self, x, v):
-        fitness = [self.fun(x[j]) for j in range(self.swarmsize)]
-        p = x
-        best = min(fitness)
-        pg = x[fitness.index(min(fitness))]
-        for i in range(self.maxiter):
-            for j in range(self.swarmsize):
-                for m in range(self.psize):
-                    v[j][m] = self.w * v[j][m] + self.c1 * random.random() * (
-                            p[j][m] - x[j][m]) + self.c2 * random.random() * (pg[m] - x[j][m])
-            for j in range(self.swarmsize):
-                for m in range(self.psize):
-                    x[j][m] = x[j][m] + v[j][m]
-                    if x[j][m] > self.searchrange[1]:
-                        x[j][m] = self.searchrange[1]
-                    if x[j][m] < self.searchrange[0]:
-                        x[j][m] = self.searchrange[0]
-            fitness_ = []
-            for j in range(self.swarmsize):
-                fitness_.append(self.fun(self.x[j]))
-            if min(fitness_) < best:
-                pg = self.x[fitness_.index(min(fitness_))]
-                best = min(fitness_)
-            self.best_all.append(best)
+                ax.scatter(particle.pos[0], particle.pos[1], marker='*', c='r')
+                ax.arrow(particle.pos[0], particle.pos[1], particle.velocity[0], particle.velocity[1], head_width=0.1,
+                         head_length=0.1, color='k')
 
-            print('the ' + str(i) + 'rd iteration: the optimal solution position is in ' + str(
-                pg) + ', the fitness value of the optimal solution is:' + str(best))
+                # Update particle's current position
+                particle.pos += particle.velocity
+                particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
 
-        plt.plot([i for i in range(self.maxiter)], self.best_all)
-        plt.ylabel('fitness value')
-        plt.xlabel('Number of iterations')
-        plt.title('Particle swarm fitness trend')
+                # Update particle's best known position
+                if particle.pos_z < self.cost_function(particle.best_pos[0], particle.best_pos[1]):
+                    particle.best_pos = particle.pos.copy()
 
+                    # Update swarm's best known position
+                    if particle.pos_z < swarm.best_pos_z:
+                        swarm.best_pos = particle.pos.copy()
+                        swarm.best_pos_z = particle.pos_z
 
+                # Check if particle is within boundaries
+                if particle.pos[0] > B_HI:
+                    particle.pos[0] = np.random.uniform(B_LO, B_HI)
+                    particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
+                if particle.pos[1] > B_HI:
+                    particle.pos[1] = np.random.uniform(B_LO, B_HI)
+                    particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
+                if particle.pos[0] < B_LO:
+                    particle.pos[0] = np.random.uniform(B_LO, B_HI)
+                    particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
+                if particle.pos[1] < B_LO:
+                    particle.pos[1] = np.random.uniform(B_LO, B_HI)
+                    particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
+
+            plt.subplots_adjust(right=0.95)
+            plt.pause(0.00001)
+
+            # Check for convergence
+            if abs(swarm.best_pos_z - GLOBAL_BEST) < CONVERGENCE:
+                print("The swarm has met convergence criteria after " + str(curr_iter) + " iterrations.")
+                break
+            curr_iter += 1
         plt.show()
 
-    def fun(self, x):
-        result = 0
-        for i in x:
-            result = result + pow(i, 2)
-        return result
+    def cost_function(self,x, y, a=20, b=0.2, c=2 * np.pi):
+        term_1 = np.exp((-b * np.sqrt(0.5 * (x ** 2 + y ** 2))))
+        term_2 = np.exp((np.cos(c * x) + np.cos(c * y)) / 2)
+        return -1 * a * term_1 - term_2 + a + np.exp(1)
+
+
+# Particle class
+class Particle():
+    def __init__(self, x, y, z, velocity):
+        self.pos = [x, y]
+        self.pos_z = z
+        self.velocity = velocity
+        self.best_pos = self.pos.copy()
+
+
+class Swarm():
+    def __init__(self, pop, v_max):
+        self.particles = []  # List of particles in the swarm
+        self.best_pos = None  # Best particle of the swarm
+        self.best_pos_z = np.inf  # Best particle of the swarm
+
+        for _ in range(pop):
+            x = np.random.uniform(B_LO, B_HI)
+            y = np.random.uniform(B_LO, B_HI)
+            z = self.cost_function(x, y)
+            velocity = np.random.rand(2) * v_max
+            particle = Particle(x, y, z, velocity)
+            self.particles.append(particle)
+            if self.best_pos != None and particle.pos_z < self.best_pos_z:
+                self.best_pos = particle.pos.copy()
+                self.best_pos_z = particle.pos_z
+            else:
+                self.best_pos = particle.pos.copy()
+                self.best_pos_z = particle.pos_z
+
+    def cost_function(self,x, y, a=20, b=0.2, c=2 * np.pi):
+        term_1 = np.exp((-b * np.sqrt(0.5 * (x ** 2 + y ** 2))))
+        term_2 = np.exp((np.cos(c * x) + np.cos(c * y)) / 2)
+        return -1 * a * term_1 - term_2 + a + np.exp(1)
 
 
 if __name__ == "__main__":
@@ -107,7 +158,7 @@ if __name__ == "__main__":
     x0 = np.array([0, 0, np.pi / 2, 3.0, 0.0, 0])
     xg = np.array([100, 100, np.pi / 4])
     myvessel = Vessel(x0, xg, 0.05, 0.5, 1, [], True, 'viknes')
-    vesselArray=[myvessel]
+    vesselArray = [myvessel]
     mopso = Mopso(x0, xg, mymap)
 
     mopso.update(myvessel)
@@ -131,9 +182,9 @@ if __name__ == "__main__":
     mymap.draw(ax, 'g', 'k')
     ax.grid()
 
- #   tikz_save('../../../latex/fig/testfig2.tikz',
- #             figureheight='8cm',
- #             figurewidth='8cm',
- #             textsize=11)
+    #   tikz_save('../../../latex/fig/testfig2.tikz',
+    #             figureheight='8cm',
+    #             figurewidth='8cm',
+    #             textsize=11)
 
     plt.show()

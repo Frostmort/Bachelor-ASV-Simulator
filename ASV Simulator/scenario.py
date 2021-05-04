@@ -64,8 +64,8 @@ class Scenario(object):
             xg1 = np.array([75, 150, 0])
 
             # Vessel 2 (WAFI)
-            x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
-            xg2 = np.array([0, 80, 0])
+            x02 = np.array([75, 150, -np.pi/2, 2.5, 0, 0])
+            xg2 = np.array([75, 0, 0])
 
         elif scenname == "wafi":
             # Vessel 1 (Main vessel)

@@ -1,3 +1,4 @@
+import copy
 import sys, time
 import heapq
 
@@ -15,22 +16,36 @@ from matplotlib2tikz import save as tikz_save
 class VO(Controller):
     def __init__(self, vesselArray=[], scanDistance=50):
         self.scanDistance = scanDistance
+        self.tc = 0
+        self.collisionCounter = 0
+        self.newVesselParams = [0, 0]
         #self.VOarray = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.collision = False
+        self.collisionAvoidanceActive = False
 
     def update(self, vobj, vesselArray):
+        if self.collisionAvoidanceActive:
+            print('Collision avoidance subroutine active')
+            if self.collisionCounter <= self.tc:
+                vobj.u_d = self.newVesselParams[0]
+                vobj.psi_d = vobj.x[2] - self.newVesselParams[1]
+                self.collisionCounter += 1
+            else:
+                self.collisionAvoidanceActive = False
+                print('Collision avoidance subroutine deactivated')
 
-        for v in vesselArray:
-            if not v.is_main_vessel:
-                vessel2 = v
-                scanData = self.scan(vobj, vessel2)
-                if scanData[0] <= self.scanDistance:
-                    VOarray = self.createVO(vobj, vessel2, scanData)
-                    if VOarray[3] > VOarray[8] > VOarray[4]:
-                        print("Collision imminent!")
-                        newDirection = self.collisionAvoidance(vobj, vessel2, scanData)
-                        vobj.u_d = newDirection.x[3]
-                        vobj.psi_d = newDirection.x[4]
+        else:
+            for v in vesselArray:
+                if not v.is_main_vessel:
+                    scanData = self.scan(vobj, v)
+                    if scanData[0] <= self.scanDistance:
+                        VOarray = self.createVO(vobj, v, scanData)
+                        if VOarray[3] > VOarray[8] > VOarray[4]:
+                            print("Collision imminent!")
+                            self.collisionAvoidanceActive = True
+                            self.collisonCounter = 0;
+                            self.newVesselParams = self.collisionAvoidance(vobj, v, scanData)
+                            vobj.u_d = self.newVesselParams[0]
+                            vobj.psi_d = vobj.x[2] - self.newVesselParams[1]
 
 
 
@@ -54,12 +69,12 @@ class VO(Controller):
         scanData = scanData
         VO = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         # find which side crossing vessel is coming from
-        # if vessel2.x[0] > vessel1.x[0] and (np.pi / 2 < vessel2.x[2] < 3 * np.pi / 2):
-        #     VO[0] = 'r'
-        # elif vessel2.x[0] < vessel1.x[0] and (vessel2.x[2] < np.pi / 2 or vessel2.x[2] > 3 * np.pi / 2):
-        #     VO[0] = 'l'
-        # else:
-        #     VO[0] = 'n'
+        if vessel2.x[0] > vessel1.x[0] and (np.pi / 2 < vessel2.x[2] < 3 * np.pi / 2):
+            VO[0] = 'r'
+        elif vessel2.x[0] < vessel1.x[0] and (vessel2.x[2] < np.pi / 2 or vessel2.x[2] > 3 * np.pi / 2):
+            VO[0] = 'l'
+        else:
+            VO[0] = 'n'
 
         # find left and right boundaries of collision cone
         VO[1] = scanData[0]
@@ -80,10 +95,14 @@ class VO(Controller):
     def collisionAvoidance(self, v1, v2, scanData):
 
         # xyc = self.getCollisionPoint(v1, v2)
+        t0 = time.process_time_ns()
         xyc = [0, 0]
-        tc = self.getCollisionTime(v1, v2, xyc)
-        RV = self.getRV(v1,tc)
-        return self.getRAV(v1, v2, RV, scanData)
+        self.tc = self.getCollisionTime(v1, v2, xyc)
+        RV = self.getRV(v1)
+        newParams = self.getRAV(v1, v2, RV, scanData)
+        tf = time.process_time_ns() - t0
+        print('Avoidance calculated in', tf)
+        return newParams
 
 
     def getCollisionPoint(self, v1, v2):
@@ -103,7 +122,7 @@ class VO(Controller):
 
         return (tx + ty) / 2 # returns average of x and y times
 
-    def getRV(self, v1, tc):
+    def getRV(self, v1):
         u_max = v1.model.est_u_max # max surge velocity
         u_min = v1.model.est_u_min # min surge velocity (reverse)
         r_max = v1.model.est_r_max # max yaw velocity
@@ -112,7 +131,7 @@ class VO(Controller):
         du_min = v1.model.est_du_min # min surge acceleration (reverse)
         dr_max = v1.model.est_dr_max # max yaw acceleration
 
-        t = tc/4
+        t = self.tc/4
 
         rt = dr_max * t
         ut = du_max * t
@@ -131,14 +150,34 @@ class VO(Controller):
         return [maxstraight, maxreverse, maxstarboard, maxport]
 
     def getRAV(self, v1, v2, RV, scanData):
-        vessel1 = v1
-        vessel2 = v2
-        print(vessel2.x)
-        maxstarangle = np.arctan2(RV[2][1], RV[2][0])
-        maxportangle = np.arctan2(RV[3][0], RV[3][0])
-        testVessel = vessel1
+        maxstarangle = (np.arctan2(RV[2][1], RV[2][0]) + v1.x[2])
+        maxportangle = (np.arctan2(RV[3][0], RV[3][0]) + v1.x[2])
+        testVessel = copy.deepcopy(v1)
 
+        print(v1.x[3], testVessel.x[3])
         testVessel.x[3] = 0
-        testVO = self.createVO(testVessel, vessel2, scanData)
+        print(v1.x[3], testVessel.x[3])
+
+        testVO = self.createVO(testVessel, v2, scanData)
         if not testVO[3] > testVO[8] > testVO[4]:
-            return testVessel
+            return [testVessel.x[2], testVessel.x[3]]
+
+        testVessel.x[3] = math.sqrt(RV[2][0]**2 + RV[2][1]**2)
+        testVessel.x[2] = np.arctan2(RV[2][1], RV[2][0])
+        testVO = self.createVO(testVessel, v2, scanData)
+        if not testVO[3] > testVO[8] > testVO[4]:
+            return [testVessel.x[2], testVessel.x[3]]
+
+        testVessel.x[3] = math.sqrt(RV[3][0]**2 + RV[3][1]**2)
+        testVessel.x[2] = np.arctan2(RV[3][1],RV[3][0])
+        testVO = self.createVO(testVessel, v2, scanData)
+        if not testVO[3] > testVO[8] > testVO[4]:
+            return [testVessel.x[2], testVessel.x[3]]
+
+        testVessel.x[3] = RV[0]
+        testVessel.x[2] = v1.x[2]
+        testVO = self.createVO(testVessel, v2, scanData)
+        if not testVO[3] > testVO[8] > testVO[4]:
+            return [testVessel.x[2], testVessel.x[3]]
+
+        return [v1.x[3], v1.x[2]]

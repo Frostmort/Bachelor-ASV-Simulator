@@ -104,6 +104,8 @@ class Vessel(object):
 
     def update_model(self, n):
         self.path[n] = self.model.update(self.u_d, self.psi_d, self.r_d)
+        if self.is_main_vessel:
+            print (self.x[2])
 
     def update_controllers(self, vesselArray):
         """Updates all the vessels controllers."""

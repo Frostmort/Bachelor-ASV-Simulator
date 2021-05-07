@@ -7,6 +7,8 @@ from utils import Controller
 
 class Wafi(Controller):
     def __init__(self, R2=60, mode='wafi', seed=1357, turnfreq=40):
+
+
         self.cGoal = None  # Current Goal
         self.cWP = 0  # Used if waypoint-navigation
         self.nWP = 0
@@ -25,7 +27,8 @@ class Wafi(Controller):
 
         self.wps = None
 
-    def update(self, vobj, vesselArray):
+    def update(self, vobj, world, vesselArray):
+
         if not self.is_initialized:
             # Reference to the vessel object's waypoints
             self.wps = vobj.waypoints
@@ -33,6 +36,7 @@ class Wafi(Controller):
             #initial setup for wafi, set seed and get starting goal
             if self.mode == 'wafi':
 #                self.rng.seed(self.seed)
+
                 self.new_goal(vobj)
             self.is_initialized = True
 
@@ -47,9 +51,11 @@ class Wafi(Controller):
 
 
 
+
         if self.mode == 'wafi':
             vobj.psi_d = np.arctan2(self.goalx -y,
                                     self.goaly - x)
+
             self.stepcounter = self.stepcounter + 1
 #            print('step:',self.stepcounter)
             if self.stepcounter >= self.turnfreq:
@@ -69,7 +75,9 @@ class Wafi(Controller):
     def random_waypoint(self):
         x = self.rng.randrange(-50, 50, 1)
         y = self.rng.randrange(-50, 50, 1)
+
         print('new random numbers x:',x,'y:',y)
+
         return (x, y)
 
     def new_goal(self,vobj):
@@ -79,7 +87,9 @@ class Wafi(Controller):
         self.goalx= x1 + x2
         self.goaly= y1 + y2
 
+
         print('set new goal', self.goaly,',',self.goalx)
+
 
 
 if __name__ == "__main__":

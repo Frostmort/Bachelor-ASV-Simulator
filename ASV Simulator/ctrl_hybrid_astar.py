@@ -33,7 +33,7 @@ class HybridAStar(Controller):
         self.step_size      = 1.5*the_map.get_gridsize()
         self.dubins_expansion_constant = 50
 
-    def update(self, vessel_object):
+    def update(self, vobj, world, vessel_object):
         if self.to_be_updated:
 
             vessel_object.waypoints = self.search(vessel_object)

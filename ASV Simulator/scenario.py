@@ -77,6 +77,16 @@ class Scenario(object):
             xgf = np.array([250, 10, 0])
             ppf = Wafi(mode='wafi')
 
+        elif scenname == "wafi":
+            # Vessel 1 (Main vessel)
+            x01 = np.array([80, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([80, 150, 0])
+
+            # Vessel 2 (WAFI)
+            x0f = np.array([80, 80, np.pi*1.5, 2.5, 0, 0])
+            xgf = np.array([250, 10, 0])
+            ppf = Wafi(mode='wafi')
+
         else:
             # Vessel 1 (Main vessel)
             x01 = np.array([10.0, 10.0, 3.14/4, 2.5, 0, 0])
@@ -785,7 +795,7 @@ if __name__ == "__main__":
 
 
         #map,controller,scene
-    scen = Scenario("blank", ["astar"], "VO_test")
+    scen = Scenario("blank", ["astar"], "wafi")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

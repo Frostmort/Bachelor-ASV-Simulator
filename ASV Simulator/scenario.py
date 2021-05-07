@@ -782,8 +782,6 @@ if __name__ == "__main__":
     #         sim.run_sim()
     #sim  = Simulation(scen, fig, axarr)
 
-
-
         #map,controller,scene
     scen = Scenario("blank", ["astar"], "wafi")
     sim  = Simulation(scen, savedata=False)

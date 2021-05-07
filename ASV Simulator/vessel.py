@@ -111,7 +111,7 @@ class Vessel(object):
         """Updates all the vessels controllers."""
         vessels = vesselArray
         for ctrl in self.controllers:
-            ctrl.update(self, vesselArray = vessels)
+            ctrl.update(self, self.world, vessels)
 
     def get_simulation_data(self, n):
         """Returns a list of various simulation data (path length, power usage, etc.) """

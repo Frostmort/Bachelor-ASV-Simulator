@@ -17,7 +17,7 @@ class PurePursuit(Controller):
 
         self.wps  = None
 
-    def update(self, vobj, vesselArray):
+    def update(self, vobj, world, vesselArray):
         if not self.is_initialized:
             # Reference to the vessel object's waypoints
             self.wps = vobj.waypoints

@@ -14,15 +14,17 @@ from matplotlib2tikz import save as tikz_save
 
 
 class VO(Controller):
-    def __init__(self, vesselArray=[], scanDistance=50):
+    def __init__(self, scanDistance=50):
         self.scanDistance = scanDistance
         self.tc = 0
+        self.world = 0
         self.collisionCounter = 0
         self.newVesselParams = [0, 0]
         #self.VOarray = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.collisionAvoidanceActive = False
 
-    def update(self, vobj, vesselArray):
+    def update(self, vobj, world, vesselArray):
+        self.world = world
         if self.collisionAvoidanceActive:
             print('Collision avoidance subroutine active')
             if self.collisionCounter <= self.tc:
@@ -159,25 +161,42 @@ class VO(Controller):
         print(v1.x[3], testVessel.x[3])
 
         testVO = self.createVO(testVessel, v2, scanData)
-        if not testVO[3] > testVO[8] > testVO[4]:
+        if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
         testVessel.x[3] = math.sqrt(RV[2][0]**2 + RV[2][1]**2)
         testVessel.x[2] = np.arctan2(RV[2][1], RV[2][0])
         testVO = self.createVO(testVessel, v2, scanData)
-        if not testVO[3] > testVO[8] > testVO[4]:
+        if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
         testVessel.x[3] = math.sqrt(RV[3][0]**2 + RV[3][1]**2)
         testVessel.x[2] = np.arctan2(RV[3][1],RV[3][0])
         testVO = self.createVO(testVessel, v2, scanData)
-        if not testVO[3] > testVO[8] > testVO[4]:
+        if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
         testVessel.x[3] = RV[0]
         testVessel.x[2] = v1.x[2]
         testVO = self.createVO(testVessel, v2, scanData)
-        if not testVO[3] > testVO[8] > testVO[4]:
+        if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
         return [v1.x[3], v1.x[2]]
+
+    def checkNewVO(self, VO, vessel):
+        if not VO[3] > VO[8] > VO[4] and not self.checkForLand(Vessel):
+            return True
+        else:
+            return False
+
+    def checkLand(self, vessel1):
+        for x in range (self.world.N, (self.world.N + self.tc/4)):
+            vessel1.update_model(x)
+        p0 = vessel1.model.x[0:2]
+
+        # Have we crashed with land?
+        if self.world._map.is_occupied(p0, safety_region=False):
+            return True
+        else:
+            return False

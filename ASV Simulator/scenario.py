@@ -60,7 +60,7 @@ class Scenario(object):
 
         elif scenname == "VO_test":
             # Vessel 1 (Main vessel)
-            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
             xg1 = np.array([75, 150, 0])
 
             # Vessel 2 (WAFI)
@@ -75,17 +75,7 @@ class Scenario(object):
             # Vessel 2 (WAFI)
             x0f = np.array([80, 80, np.pi*1.5, 2.5, 0, 0])
             xgf = np.array([250, 10, 0])
-            ppf = Wafi(mode='wafi')
-
-        elif scenname == "wafi":
-            # Vessel 1 (Main vessel)
-            x01 = np.array([80, 0.0, np.pi / 2, 2.5, 0, 0])
-            xg1 = np.array([80, 150, 0])
-
-            # Vessel 2 (WAFI)
-            x0f = np.array([80, 80, np.pi*1.5, 2.5, 0, 0])
-            xgf = np.array([250, 10, 0])
-            ppf = Wafi(mode='wafi')
+            # wafi = Wafi(mode='wafi')
 
         else:
             # Vessel 1 (Main vessel)
@@ -156,13 +146,13 @@ class Scenario(object):
             vessels.append(v2)
 
         elif scenname == "wafi":
-            ppf.cGoal = v1.x
+            #ppf.cGoal = v1.x
             vf = Vessel(x0f,
                         xgf,
                         self.h,
                         self.dT,
                         self.N,
-                        [ppf],
+                        [Wafi(mode='wafi')],
                         is_main_vessel=False,
                         vesseltype='viknes')
             vf.u_d = 2

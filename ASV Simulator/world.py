@@ -12,6 +12,7 @@ from matplotlib2tikz import save as tikz_save
 class World(object):
     def __init__(self, vessels, the_map):
         self._vessels = vessels
+        self.n = 0
 
         for v in self._vessels:
             v.world = self
@@ -36,9 +37,10 @@ class World(object):
         self._vessels[0].save_data(n, filename)
 
     def update_world(self, t, n):
+        self.n = n
         for v in self._vessels:
             v.time = t
-            v.update_model(n)
+            v.update_model(self.n)
             if int(t*100)%int(v.dT*100) == 0:  # Always true with dT = 0.5
                 v.update_controllers(vesselArray = self._vessels)
         self.minDistance = self.getMinDistance()

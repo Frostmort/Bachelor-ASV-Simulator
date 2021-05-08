@@ -237,7 +237,10 @@ class Vessel(object):
         draw_explosion = has_collided and self.is_main_vessel
 
         if self.is_main_vessel:
-            theface = 'b'
+            if self.controllers[2].collisionAvoidanceActive:
+                theface = 'r'
+            else:
+                theface = 'b'
         else:
             theface = 'y'
 

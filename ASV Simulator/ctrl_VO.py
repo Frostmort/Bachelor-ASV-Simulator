@@ -50,8 +50,6 @@ class VO(Controller):
                             vobj.psi_d = vobj.x[2] - self.newVesselParams[1]
 
 
-
-
     def scan(self, vessel1, vessel2):
         xd = (vessel2.x[0] - vessel1.x[0])
         yd = (vessel2.x[1] - vessel1.x[1])
@@ -66,9 +64,6 @@ class VO(Controller):
     # 4 right collision cone edge, 5 velocity of A, 6 velocity of B, 7 relative velocity magnitude,
     # 8 relative velocity angle]
     def createVO(self, vessel1, vessel2, scanData):
-        vessel1 = vessel1
-        vessel2 = vessel2
-        scanData = scanData
         VO = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         # find which side crossing vessel is coming from
         if vessel2.x[0] > vessel1.x[0] and (np.pi / 2 < vessel2.x[2] < 3 * np.pi / 2):
@@ -154,11 +149,17 @@ class VO(Controller):
     def getRAV(self, v1, v2, RV, scanData):
         maxstarangle = (np.arctan2(RV[2][1], RV[2][0]) + v1.x[2])
         maxportangle = (np.arctan2(RV[3][0], RV[3][0]) + v1.x[2])
-        testVessel = copy.deepcopy(v1)
+        testVessel = Vessel([0,0,0,0,0,0], [0,0,0,0,0,0], v1.h, v1.dT, v1.N, [], True, 'viknes')
+        testVessel.world = self.world
+        # for i in range (0, 5):
+        #     testVessel.x[i] = copy.deepcopy(v1.x[i])
+        testVessel.x = copy.deepcopy(v1.x)
 
-        print(v1.x[3], testVessel.x[3])
-        testVessel.x[3] = 0
-        print(v1.x[3], testVessel.x[3])
+        # testVessel = copy.deepcopy(v1)
+
+        # print(v1.x[3], testVessel.x[3])
+        # testVessel.x[3] = 0
+        # print(v1.x[3], testVessel.x[3])
 
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO, testVessel):
@@ -185,13 +186,14 @@ class VO(Controller):
         return [v1.x[3], v1.x[2]]
 
     def checkNewVO(self, VO, vessel):
-        if not VO[3] > VO[8] > VO[4] and not self.checkForLand(Vessel):
+        # if not VO[3] > VO[8] > VO[4] and not self.checkLand(vessel):
+        if not VO[3] > VO[8] > VO[4]:
             return True
         else:
             return False
 
     def checkLand(self, vessel1):
-        for x in range (self.world.N, (self.world.N + self.tc/4)):
+        for x in range (self.world.n, int(self.world.n + self.tc/4)):
             vessel1.update_model(x)
         p0 = vessel1.model.x[0:2]
 

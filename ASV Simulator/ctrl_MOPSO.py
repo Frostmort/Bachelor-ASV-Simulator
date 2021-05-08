@@ -11,15 +11,14 @@ from vessel import Vessel
 
 DIMENSIONS = 2  # Number of dimensions
 GLOBAL_BEST = 0  # Global Best of Cost function
-B_LO = -5  # Upper boundary of search space
-B_HI = 5  # Upper boundary of search space
-
-POPULATION = 1000  # Number of particles in the swarm
+B_LO = -200  # Upper boundary of search space
+B_HI = 200  # Upper boundary of search space
+POPULATION = 300  # Number of particles in the swarm
 V_MAX = 0.1  # Maximum velocity value
 PERSONAL_C = 2.0  # Personal coefficient factor
 SOCIAL_C = 2.0  # Social coefficient factor
 CONVERGENCE = 0.001  # Convergence value
-MAX_ITER = 100  # Maximum number of iterrations
+MAX_ITER = 300  # Maximum number of iterrations
 BIGVAL = 10000.
 
 
@@ -29,13 +28,13 @@ class Mopso(Controller):
         self.goal = xg[0:3]
 
         self.world = None
-        self.graph = SearchGrid(the_map)
+        self.grid_size=the_map.get_dimension
+        self.graph = SearchGrid(the_map, [1.0, 1.0, 25.0/360.0])
         self.map = the_map
         self.to_be_updated = True
         self.replan = replan
         self.path_found = False
 
-        self.gridsize = the_map.get_gridsize()
 
         self.particles = []  # List of particles in the swarm
         self.best_pos = None  # Best particle of the swarm
@@ -52,25 +51,25 @@ class Mopso(Controller):
     def search(self, vesselarray, animate):
         # Initialize plotting variables
         if animate == True:
-            search_grid = self.map.get_gridsize
             x = np.linspace(B_LO, B_HI, 50)
             y = np.linspace(B_LO, B_HI, 50)
-            X, Y = search_grid
+            X, Y = np.meshgrid(x, y)
+            fig = plt.figure("Particle Swarm Optimization")
 
         # Initialize swarm
         swarm = Swarm(POPULATION, V_MAX)
         # Initialize inertia weight
         inertia_weight = 0.5 + (np.random.rand() / 2)
+        curr_iter=0
         for i in range(MAX_ITER):
 
-            if animate == True:
-                fig = plt.figure("Particle Swarm Optimization")
-                fig.clf()
-                ax = fig.add_subplot(1, 1, 1)
-                ac = ax.contourf(X, Y, self.cost_function(X, Y), cmap='viridis')
-                fig.colorbar(ac)
-
             for particle in swarm.particles:
+
+                if animate:
+                    fig.clf()
+                    ax = fig.add_subplot(1, 1, 1)
+                    ac = ax.contourf(X, Y, self.cost_function(X, Y), cmap='viridis')
+                    fig.colorbar(ac)
 
                 for i in range(0, DIMENSIONS):
                     r1 = np.random.uniform(0, 1)
@@ -128,15 +127,15 @@ class Mopso(Controller):
                 plt.show()
             # Check for convergence
             if abs(swarm.best_pos_z - GLOBAL_BEST) < CONVERGENCE:
-                print("The swarm has met convergence criteria after " + str(curr_iter) + " iterrations.")
+                print("The swarm has met convergence criteria after " + str(curr_iter) + " iterrations.", 'at:',swarm.best_pos)
                 break
             curr_iter += 1
 
-    def cost_function(self, x, y, a=20, b=0.2, c=2 * np.pi):
-        term_1 = np.exp((-b * np.sqrt(0.5 * (x ** 2 + y ** 2))))
-        term_2 = np.exp((np.cos(c * x) + np.cos(c * y)) / 2)
-        return -1 * a * term_1 - term_2 + a + np.exp(1)
-
+    def cost_function(self, x1, y2):
+        x2,y1=self.goal[0],self.goal[1]
+        deviation_cost = np.sqrt((x1-x2)**2 + (y1-y2)**2)
+        cost = deviation_cost
+        return cost
 
 
 class Swarm():
@@ -178,17 +177,16 @@ class Particle():
 ##########################################################################################################
 class SearchGrid(object):
     """General purpose N-dimentional search grid."""
-
     def __init__(self, the_map, gridsize, N=2, parent=None):
-        self.N = N
-        self.grid = the_map.get_discrete_grid()
-        self.map = the_map
+        self.N        = N
+        self.grid     = the_map.get_discrete_grid()
+        self.map      = the_map
         self.gridsize = gridsize
         self.gridsize[0] = the_map.get_gridsize()
         self.gridsize[1] = the_map.get_gridsize()
         dim = the_map.get_dimension()
 
-        self.width = dim[0]
+        self.width  = dim[0]
         self.height = dim[1]
 
         """
@@ -198,20 +196,20 @@ class SearchGrid(object):
         """
         self.grid *= BIGVAL
 
+
     def get_grid_id(self, state):
         """Returns a tuple (x,y,psi) with grid positions."""
-        return (int(state[0] / self.gridsize[0]),
-                int(state[1] / self.gridsize[1]),
-                int(state[2] / self.gridsize[2]))
+        return (int(state[0]/self.gridsize[0]),
+                int(state[1]/self.gridsize[1]),
+                int(state[2]/self.gridsize[2]))
 
     def in_bounds(self, state):
         return 0 <= state[0] < self.width and 0 <= state[1] < self.height
 
     def cost(self, a, b):
-        # if b[0] > self.width or b[1] > self.height:
+        #if b[0] > self.width or b[1] > self.height:
         #    return 0
-        return np.sqrt((a[0] - b[0]) ** 2 + (
-                    a[1] - b[1]) ** 2)  # self.grid[int(b[0]/self.gridsize[0]), int(b[1]/self.gridsize[1])]
+        return np.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)#self.grid[int(b[0]/self.gridsize[0]), int(b[1]/self.gridsize[1])]
 
     def passable(self, state):
         # TODO Rename or change? Only returns true if object is _inside_ obstacle
@@ -220,8 +218,8 @@ class SearchGrid(object):
         if state[0] > self.width or state[1] > self.height:
             return True
 
-        return self.grid[int(state[0] / self.gridsize[0]),
-                         int(state[1] / self.gridsize[1])] < BIGVAL
+        return self.grid[int(state[0]/self.gridsize[0]),
+                         int(state[1]/self.gridsize[1])] < BIGVAL
 
     def neighbors(self, state, est_r_max):
         """
@@ -229,24 +227,24 @@ class SearchGrid(object):
 
         For the Viknes 830, the maximum rudder deflection is 15 deg.
         """
-        step_length = 2.5 * self.gridsize[0]
-        avg_u = 3.5
-        Radius = 2.5 * avg_u / est_r_max
-        dTheta = step_length / Radius
-        # print(Radius, dTheta*180/np.pi)
+        step_length = 2.5*self.gridsize[0]
+        avg_u       = 3.5
+        Radius      = 2.5*avg_u / est_r_max
+        dTheta      = step_length / Radius
+        #print(Radius, dTheta*180/np.pi)
 
-        trajectories = np.array([[step_length * np.cos(dTheta), step_length * np.sin(dTheta), dTheta],
-                                 [step_length, 0., 0.],
-                                 [step_length * np.cos(dTheta), -step_length * np.sin(dTheta), -dTheta]])
+        trajectories = np.array([[step_length*np.cos(dTheta), step_length*np.sin(dTheta), dTheta],
+                                 [step_length, 0.,  0.],
+                                 [step_length*np.cos(dTheta), -step_length*np.sin(dTheta), -dTheta]])
 
-        # print(trajectories)
+        #print(trajectories)
         results = []
         for traj in trajectories:
             newpoint = state + np.dot(Rz(state[2]), traj)
             if self.passable(newpoint):
                 results.append(newpoint)
 
-        # results = filter(self.in_bounds, results)
+        #results = filter(self.in_bounds, results)
 
         return results
 

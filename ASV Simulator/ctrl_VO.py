@@ -25,29 +25,19 @@ class VO(Controller):
 
     def update(self, vobj, world, vesselArray):
         self.world = world
-        if self.collisionAvoidanceActive:
-            print('Collision avoidance subroutine active')
-            if self.collisionCounter <= self.tc:
-                vobj.u_d = self.newVesselParams[0]
-                vobj.psi_d = vobj.x[2] - self.newVesselParams[1]
-                self.collisionCounter += 1
-            else:
-                self.collisionAvoidanceActive = False
-                print('Collision avoidance subroutine deactivated')
 
-        else:
-            for v in vesselArray:
-                if not v.is_main_vessel:
-                    scanData = self.scan(vobj, v)
-                    if scanData[0] <= self.scanDistance:
-                        VOarray = self.createVO(vobj, v, scanData)
-                        if VOarray[3] > VOarray[8] > VOarray[4]:
-                            print("Collision imminent!")
-                            self.collisionAvoidanceActive = True
-                            self.collisonCounter = 0;
-                            self.newVesselParams = self.collisionAvoidance(vobj, v, scanData)
-                            vobj.u_d = self.newVesselParams[0]
-                            vobj.psi_d = vobj.x[2] - self.newVesselParams[1]
+        for v in vesselArray:
+            if not v.is_main_vessel:
+                scanData = self.scan(vobj, v)
+                if scanData[0] <= self.scanDistance:
+                    VOarray = self.createVO(vobj, v, scanData)
+                    if VOarray[3] > VOarray[8] > VOarray[4]:
+                        print("Collision imminent!")
+                        self.collisionAvoidanceActive = True
+                        self.collisonCounter = 0
+                        self.newVesselParams = self.collisionAvoidance(vobj, v, scanData)
+                        vobj.u_d = self.newVesselParams[0]
+                        vobj.psi_d = vobj.x[2] - self.newVesselParams[1]
 
 
     def scan(self, vessel1, vessel2):
@@ -128,7 +118,7 @@ class VO(Controller):
         du_min = v1.model.est_du_min # min surge acceleration (reverse)
         dr_max = v1.model.est_dr_max # max yaw acceleration
 
-        t = self.tc/4
+        t = 1
 
         rt = dr_max * t
         ut = du_max * t

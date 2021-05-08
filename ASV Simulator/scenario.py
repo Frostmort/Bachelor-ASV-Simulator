@@ -67,6 +67,15 @@ class Scenario(object):
             x02 = np.array([75, 150, -np.pi/2, 2.5, 0, 0])
             xg2 = np.array([75, 0, 0])
 
+            elif scenname == "VO_test":
+            # Vessel 1 (Main vessel)
+            x01 = np.array([75, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
+
+            # Vessel 2 (WAFI)
+            x02 = np.array([75, 150, -np.pi / 2, 2.5, 0, 0])
+            xg2 = np.array([75, 0, 0])
+
         elif scenname == "wafi":
             # Vessel 1 (Main vessel)
             x01 = np.array([80, 0.0, np.pi / 2, 2.5, 0, 0])
@@ -785,7 +794,7 @@ if __name__ == "__main__":
 
 
         #map,controller,scene
-    scen = Scenario("blank", ["astar"], "wafi")
+    scen = Scenario("blank", ["astar"], "VO_land_test")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

@@ -11,14 +11,14 @@ from vessel import Vessel
 
 DIMENSIONS = 2  # Number of dimensions
 GLOBAL_BEST = 0  # Global Best of Cost function
-B_LO = -200  # Upper boundary of search space
-B_HI = 200  # Upper boundary of search space
-POPULATION = 300  # Number of particles in the swarm
+B_LO = 0  # Upper boundary of search space
+B_HI = 100  # Upper boundary of search space
+POPULATION = 100  # Number of particles in the swarm
 V_MAX = 0.1  # Maximum velocity value
 PERSONAL_C = 2.0  # Personal coefficient factor
 SOCIAL_C = 2.0  # Social coefficient factor
-CONVERGENCE = 0.001  # Convergence value
-MAX_ITER = 300  # Maximum number of iterrations
+CONVERGENCE = 2  # Convergence value
+MAX_ITER = 200  # Maximum number of iterrations
 BIGVAL = 10000.
 
 
@@ -131,10 +131,21 @@ class Mopso(Controller):
                 break
             curr_iter += 1
 
-    def cost_function(self, x1, y2):
-        x2,y1=self.goal[0],self.goal[1]
+        if abs(swarm.best_pos_z - GLOBAL_BEST) > CONVERGENCE:
+            print("The swarm has converged after " + str(curr_iter) + " iterrations.", 'at:',
+                  swarm.best_pos)
+
+
+
+    def cost_function(self, x1, y1):
+        pos = x1,y1
+        x2,y2=self.goal[0],self.goal[1]
         deviation_cost = np.sqrt((x1-x2)**2 + (y1-y2)**2)
-        cost = deviation_cost
+        statitc_obs_cost = 0
+        if not self.graph.passable(pos):  #
+            statitc_obs_cost= BIGVAL
+
+        cost = deviation_cost + statitc_obs_cost
         return cost
 
 

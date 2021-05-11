@@ -11,19 +11,19 @@ from vessel import Vessel
 
 DIMENSIONS = 2  # Number of dimensions
 GLOBAL_BEST = 0  # Global Best of Cost function
-B_LO = 0  # Upper boundary of search space
-B_HI = 100  # Upper boundary of search space
-POPULATION = 100  # Number of particles in the swarm
-V_MAX = 0.1  # Maximum velocity value
+MIN_RANGE = 0  # Lower boundary of search space
+MAX_RANGE = 200 # Upper boundary of search space
+POPULATION = 200  # Number of particles in the swarm
+V_MAX = 1  # Maximum velocity value
 PERSONAL_C = 2.0  # Personal coefficient factor
 SOCIAL_C = 2.0  # Social coefficient factor
-CONVERGENCE = 2  # Convergence value
+CONVERGENCE = 1  # Convergence value
 MAX_ITER = 200  # Maximum number of iterrations
 BIGVAL = 10000.
 
 
 class Mopso(Controller):
-    def __init__(self, x0, xg, the_map, replan=False):
+    def __init__(self, x0, xg, the_map,search_radius=30, replan=False):
         self.start = x0[0:3]
         self.goal = xg[0:3]
 
@@ -46,18 +46,20 @@ class Mopso(Controller):
             vessel_object.waypoints = self.search(vessel_object, animate)
             print("POS CPU time: %.3f" % (time.process_time() - tic))
             self.to_be_updated = False
-            # self.map.disable_safety_region()
 
     def search(self, vesselarray, animate):
         # Initialize plotting variables
         if animate == True:
-            x = np.linspace(B_LO, B_HI, 50)
-            y = np.linspace(B_LO, B_HI, 50)
+
+            x = np.linspace(MIN_RANGE, MAX_RANGE, 50)
+            y = np.linspace(MIN_RANGE, MAX_RANGE, 50)
             X, Y = np.meshgrid(x, y)
             fig = plt.figure("Particle Swarm Optimization")
 
         # Initialize swarm
-        swarm = Swarm(POPULATION, V_MAX)
+        # v1 = vesselArray[0]
+        #shippos = v1[0],v1[0]
+        swarm = Swarm(POPULATION, V_MAX,self.goal)
         # Initialize inertia weight
         inertia_weight = 0.5 + (np.random.rand() / 2)
         curr_iter=0
@@ -108,17 +110,17 @@ class Mopso(Controller):
                         swarm.best_pos_z = particle.pos_z
 
                 # Check if particle is within boundaries
-                if particle.pos[0] > B_HI:
-                    particle.pos[0] = np.random.uniform(B_LO, B_HI)
+                if particle.pos[0] > MAX_RANGE:
+                    particle.pos[0] = np.random.uniform(MIN_RANGE, MAX_RANGE)
                     particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
-                if particle.pos[1] > B_HI:
-                    particle.pos[1] = np.random.uniform(B_LO, B_HI)
+                if particle.pos[1] > MAX_RANGE:
+                    particle.pos[1] = np.random.uniform(MIN_RANGE, MAX_RANGE)
                     particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
-                if particle.pos[0] < B_LO:
-                    particle.pos[0] = np.random.uniform(B_LO, B_HI)
+                if particle.pos[0] < MIN_RANGE:
+                    particle.pos[0] = np.random.uniform(MIN_RANGE, MAX_RANGE)
                     particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
-                if particle.pos[1] < B_LO:
-                    particle.pos[1] = np.random.uniform(B_LO, B_HI)
+                if particle.pos[1] < MIN_RANGE:
+                    particle.pos[1] = np.random.uniform(MIN_RANGE, MAX_RANGE)
                     particle.pos_z = self.cost_function(particle.pos[0], particle.pos[1])
 
             if animate == True:
@@ -140,9 +142,9 @@ class Mopso(Controller):
     def cost_function(self, x1, y1):
         pos = x1,y1
         x2,y2=self.goal[0],self.goal[1]
-        deviation_cost = np.sqrt((x1-x2)**2 + (y1-y2)**2)
+        deviation_cost = np.sqrt((x1-x2)**2 + (y1-y2)**2)   #distance from goal
         statitc_obs_cost = 0
-        if not self.graph.passable(pos):  #
+        if not self.graph.passable(pos):                    #Check if static obstacle
             statitc_obs_cost= BIGVAL
 
         cost = deviation_cost + statitc_obs_cost
@@ -150,18 +152,26 @@ class Mopso(Controller):
 
 
 class Swarm():
-    def __init__(self, pop, v_max):
+    def __init__(self, pop, v_max,goal):
         self.particles = []  # List of particles in the swarm
         self.best_pos = None  # Best particle of the swarm
         self.best_pos_z = np.inf  # Best particle of the swarm
-
+        # fg, ax = plt.subplots(1, 1)
         for _ in range(pop):
-            x = np.random.uniform(B_LO, B_HI)
-            y = np.random.uniform(B_LO, B_HI)
-            z = self.cost_function(x, y)
+            r = np.random.uniform(MIN_RANGE, MAX_RANGE)
+            theta = np.random.uniform(MIN_RANGE, MAX_RANGE*np.pi)
+            x = np.sqrt(r) * np.cos(theta)
+            y = np.sqrt(r) * np.sin(theta)
+            # if x < 0:
+            #     x=0
+            # if y < 0:
+            #     y=0
+
+            z = self.cost_function(x, y,goal)
             velocity = np.random.rand(2) * v_max
             particle = Particle(x, y, z, velocity)
             self.particles.append(particle)
+            # ax.plot(x, y, '.')  # plot random points
             if self.best_pos != None and particle.pos_z < self.best_pos_z:
                 self.best_pos = particle.pos.copy()
                 self.best_pos_z = particle.pos_z
@@ -169,10 +179,19 @@ class Swarm():
                 self.best_pos = particle.pos.copy()
                 self.best_pos_z = particle.pos_z
 
-    def cost_function(self, x, y, a=20, b=0.2, c=2 * np.pi):
-        term_1 = np.exp((-b * np.sqrt(0.5 * (x ** 2 + y ** 2))))
-        term_2 = np.exp((np.cos(c * x) + np.cos(c * y)) / 2)
-        return -1 * a * term_1 - term_2 + a + np.exp(1)
+        # print(len(self.particles))
+        # ax.axis('equal')
+        # ax.grid(True)
+        # fg.canvas.draw()
+        # plt.show()
+    def cost_function(self, x1, y1,goal):
+        pos = x1,y1
+        x2,y2=goal[0],goal[1]
+        deviation_cost = np.sqrt((x1-x2)**2 + (y1-y2)**2)   #distance from goal
+        statitc_obs_cost = 0
+
+        cost = deviation_cost + statitc_obs_cost
+        return cost
 
 
 # Particle class
@@ -182,8 +201,6 @@ class Particle():
         self.pos_z = z
         self.velocity = velocity
         self.best_pos = self.pos.copy()
-
-
 
 ##########################################################################################################
 class SearchGrid(object):
@@ -267,7 +284,7 @@ if __name__ == "__main__":
     mymap = Map("s1", gridsize=1.0, safety_region_length=4.5)
 
     x0 = np.array([0, 0, np.pi / 2, 3.0, 0.0, 0])
-    xg = np.array([100, 100, np.pi / 4])
+    xg = np.array([40, 80, np.pi / 4])
     myvessel = Vessel(x0, xg, 0.05, 0.5, 1, [], True, 'viknes')
     vesselArray = [myvessel]
     mopso = Mopso(x0, xg, mymap)

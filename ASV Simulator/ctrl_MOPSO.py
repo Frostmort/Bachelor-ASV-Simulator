@@ -12,12 +12,12 @@ from vessel import Vessel
 DIMENSIONS = 2  # Number of dimensions
 GLOBAL_BEST = 0  # Global Best of Cost function
 MIN_RANGE = 0  # Lower boundary of search space
-MAX_RANGE = 200 # Upper boundary of search space
+MAX_RANGE = 30 # Upper boundary of search space
 POPULATION = 200  # Number of particles in the swarm
 V_MAX = 1  # Maximum velocity value
 PERSONAL_C = 2.0  # Personal coefficient factor
 SOCIAL_C = 2.0  # Social coefficient factor
-CONVERGENCE = 1  # Convergence value
+CONVERGENCE = 0.1  # Convergence value
 MAX_ITER = 200  # Maximum number of iterrations
 BIGVAL = 10000.
 
@@ -34,6 +34,7 @@ class Mopso(Controller):
         self.to_be_updated = True
         self.replan = replan
         self.path_found = False
+
 
 
         self.particles = []  # List of particles in the swarm
@@ -57,9 +58,10 @@ class Mopso(Controller):
             fig = plt.figure("Particle Swarm Optimization")
 
         # Initialize swarm
-        # v1 = vesselArray[0]
-        #shippos = v1[0],v1[0]
-        swarm = Swarm(POPULATION, V_MAX,self.goal)
+        v1 = vesselArray[0]
+        x0=v1.x[0:2]
+
+        swarm = Swarm(POPULATION, V_MAX,self.goal,x0)
         # Initialize inertia weight
         inertia_weight = 0.5 + (np.random.rand() / 2)
         curr_iter=0
@@ -129,7 +131,7 @@ class Mopso(Controller):
                 plt.show()
             # Check for convergence
             if abs(swarm.best_pos_z - GLOBAL_BEST) < CONVERGENCE:
-                print("The swarm has met convergence criteria after " + str(curr_iter) + " iterrations.", 'at:',swarm.best_pos)
+                print("The swarm has met convergence criteria after " + str(curr_iter) + " iterrations.", 'at:',swarm.best_pos[1],swarm.best_pos[0])
                 break
             curr_iter += 1
 
@@ -137,6 +139,7 @@ class Mopso(Controller):
             print("The swarm has converged after " + str(curr_iter) + " iterrations.", 'at:',
                   swarm.best_pos)
 
+        return self.best_pos
 
 
     def cost_function(self, x1, y1):
@@ -152,16 +155,17 @@ class Mopso(Controller):
 
 
 class Swarm():
-    def __init__(self, pop, v_max,goal):
+    def __init__(self, pop, v_max,goal,x0):
         self.particles = []  # List of particles in the swarm
         self.best_pos = None  # Best particle of the swarm
         self.best_pos_z = np.inf  # Best particle of the swarm
+        self.x0 = x0 #ship pos
         # fg, ax = plt.subplots(1, 1)
         for _ in range(pop):
             r = np.random.uniform(MIN_RANGE, MAX_RANGE)
             theta = np.random.uniform(MIN_RANGE, MAX_RANGE*np.pi)
-            x = np.sqrt(r) * np.cos(theta)
-            y = np.sqrt(r) * np.sin(theta)
+            x = (np.sqrt(r) * np.cos(theta))+x0[0]
+            y = (np.sqrt(r) * np.sin(theta))+x0[1]
             # if x < 0:
             #     x=0
             # if y < 0:
@@ -284,10 +288,11 @@ if __name__ == "__main__":
     mymap = Map("s1", gridsize=1.0, safety_region_length=4.5)
 
     x0 = np.array([0, 0, np.pi / 2, 3.0, 0.0, 0])
-    xg = np.array([40, 80, np.pi / 4])
+    xg = np.array([30, 86, np.pi / 4])
     myvessel = Vessel(x0, xg, 0.05, 0.5, 1, [], True, 'viknes')
     vesselArray = [myvessel]
     mopso = Mopso(x0, xg, mymap)
+
 
     mopso.update(myvessel, animate=False)
 

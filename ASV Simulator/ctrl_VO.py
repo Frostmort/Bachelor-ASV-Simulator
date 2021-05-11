@@ -37,7 +37,7 @@ class VO(Controller):
                         self.collisonCounter = 0
                         self.newVesselParams = self.collisionAvoidance(vobj, v, scanData)
                         vobj.u_d = self.newVesselParams[0]
-                        vobj.psi_d = vobj.x[2] - self.newVesselParams[1]
+                        vobj.psi_d = self.newVesselParams[1]
 
 
     def scan(self, vessel1, vessel2):
@@ -137,32 +137,24 @@ class VO(Controller):
         return [maxstraight, maxreverse, maxstarboard, maxport]
 
     def getRAV(self, v1, v2, RV, scanData):
-        maxstarangle = (np.arctan2(RV[2][1], RV[2][0]) + v1.x[2])
-        maxportangle = (np.arctan2(RV[3][0], RV[3][0]) + v1.x[2])
-        testVessel = Vessel([0,0,0,0,0,0], [0,0,0,0,0,0], v1.h, v1.dT, v1.N, [], True, 'viknes')
+        testVessel = Vessel(np.zeros((1,6)), np.zeros((1,6)), v1.h, v1.dT, v1.N, [], True, 'viknes')
         testVessel.world = self.world
-        # for i in range (0, 5):
-        #     testVessel.x[i] = copy.deepcopy(v1.x[i])
+
         testVessel.x = copy.deepcopy(v1.x)
 
-        # testVessel = copy.deepcopy(v1)
 
-        # print(v1.x[3], testVessel.x[3])
-        # testVessel.x[3] = 0
-        # print(v1.x[3], testVessel.x[3])
-
-        testVO = self.createVO(testVessel, v2, scanData)
-        if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[2], testVessel.x[3]]
+        # testVO = self.createVO(testVessel, v2, scanData)
+        # if self.checkNewVO(testVO, testVessel):
+        #     return [testVessel.x[2], testVessel.x[3]]
 
         testVessel.x[3] = math.sqrt(RV[2][0]**2 + RV[2][1]**2)
-        testVessel.x[2] = np.arctan2(RV[2][1], RV[2][0])
+        testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[2][1], RV[2][0]))
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
         testVessel.x[3] = math.sqrt(RV[3][0]**2 + RV[3][1]**2)
-        testVessel.x[2] = np.arctan2(RV[3][1],RV[3][0])
+        testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[3][1],RV[3][0]))
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]

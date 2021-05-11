@@ -206,7 +206,7 @@ class VO(Controller):
     def checkLand(self, vessel1, params):
         vessel1.u_d = params[0]
         vessel1.psi_d = params[1]
-        for x in range(self.world.n, round((self.world.n + (self.tc * 10)))):
+        for x in range(self.world.n, round(self.world.n + (self.tc * 100))):
             vessel1.update_model(x)
             p0 = vessel1.model.x[0:2]
             if self.world._map.is_occupied(p0, safety_region=False):

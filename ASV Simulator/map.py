@@ -110,7 +110,7 @@ class Map(object):
 
         elif maptype == 'VO_land_test':
             self._dim = [160, 160]
-            self._obstacles = [Polygon([(80, 0), (80, 160), (160, 160), (160,0)])]
+            self._obstacles = [Polygon([(100, 0), (100, 160), (160, 160), (160,0)])]
 
         elif maptype == 'triangle':
             self._dim = [160, 160]

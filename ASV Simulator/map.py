@@ -108,7 +108,9 @@ class Map(object):
             self._dim=[225, 225]
             self._obstacles = [Polygon([(80.2,56.8), (66.1,98.5), (80.8,149.8), (105.6,158.7), (130.4,133.8), (120.1,105.4), (101.2,77.4)], safety_region_length)]
 
-
+        elif maptype == 'VO_land_test':
+            self._dim = [160, 160]
+            self._obstacles = [Polygon([(80, 0), (80, 160), (160, 160), (160,0)])]
 
         elif maptype == 'triangle':
             self._dim = [160, 160]

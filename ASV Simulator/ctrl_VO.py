@@ -139,54 +139,77 @@ class VO(Controller):
         return [maxstraight, maxreverse, maxstarboard, maxport]
 
     def getRAV(self, v1, v2, RV, scanData):
-        testVessel = Vessel(np.zeros((1,6)), np.zeros((1,6)), v1.h, v1.dT, v1.N, [], True, 'viknes')
-        testVessel.world = self.world
+        testVessel = Vessel(copy.deepcopy(v1.x), np.zeros((1, 6)), v1.h, v1.dT, v1.N, [], False, 'viknes')
+        testVessel.world = copy.deepcopy(self.world)
 
         testVessel.x = copy.deepcopy(v1.x)
 
 
         # testVO = self.createVO(testVessel, v2, scanData)
         # if self.checkNewVO(testVO, testVessel):
-        #     return [testVessel.x[2], testVessel.x[3]]
+        #     return [testVessel.x[3], testVessel.x[2]]
 
         print('test starboard')
         testVessel.x[3] = math.sqrt(RV[2][0]**2 + RV[2][1]**2)
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[2][1], RV[2][0]))
         testVO = self.createVO(testVessel, v2, scanData)
-        if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[2], testVessel.x[3]]
+        newParams = [testVessel.x[3], testVessel.x[2]]
+        testVessel.x = copy.deepcopy(v1.x)
+        if self.checkNewVO(testVO) and not self.checkLand(testVessel, newParams):
+            return newParams
 
         print('test port')
         testVessel.x[3] = math.sqrt(RV[3][0]**2 + RV[3][1]**2)
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[3][1],RV[3][0]))
         testVO = self.createVO(testVessel, v2, scanData)
-        if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[2], testVessel.x[3]]
+        if self.checkNewVO(testVO):
+            return [testVessel.x[3], testVessel.x[2]]
 
         print('test ahead')
         testVessel.x[3] = RV[0]
         testVessel.x[2] = v1.x[2]
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[2], testVessel.x[3]]
+            return [testVessel.x[3], testVessel.x[2]]
+
+        print('test reverse starboard')
+        testVessel.x[3] = RV[1]
+        testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[2][1], RV[2][0]))
+        testVO = self.createVO(testVessel, v2, scanData)
+        if self.checkNewVO(testVO, testVessel):
+            return [testVessel.x[3], testVessel.x[2]]
+
+        print('test reverse port')
+        testVessel.x[3] = RV[1]
+        testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[3][1],RV[3][0]))
+        testVO = self.createVO(testVessel, v2, scanData)
+        if self.checkNewVO(testVO, testVessel):
+            return [testVessel.x[3], testVessel.x[2]]
+
+        print('test reverse')
+        testVessel.x[3] = RV[1]
+        testVessel.x[2] = v1.x[2]
+        testVO = self.createVO(testVessel, v2, scanData)
+        if self.checkNewVO(testVO, testVessel):
+            return [testVessel.x[3], testVessel.x[2]]
 
         print('faaan')
-        return [v1.x[3], v1.x[2]]
+        return [0, v1.x[2]]
 
-    def checkNewVO(self, VO, vessel):
+    def checkNewVO(self, VO):
         # if not VO[3] > VO[8] > VO[4] and not self.checkLand(vessel):
         if not VO[3] > VO[8] > VO[4]:
             return True
         else:
             return False
 
-    def checkLand(self, vessel1):
-        for x in range (self.world.n, int(self.world.n + self.tc/4)):
+    def checkLand(self, vessel1, params):
+        vessel1.u_d = params[0]
+        vessel1.psi_d = params[1]
+        for x in range(self.world.n, round((self.world.n + self.tc) * 10)):
             vessel1.update_model(x)
-        p0 = vessel1.model.x[0:2]
+            p0 = vessel1.model.x[0:2]
+            if self.world._map.is_occupied(p0, safety_region=False):
+                return True
 
-        # Have we crashed with land?
-        if self.world._map.is_occupied(p0, safety_region=False):
-            return True
-        else:
-            return False
+        return False

@@ -13,6 +13,7 @@ class World(object):
     def __init__(self, vessels, the_map):
         self._vessels = vessels
         self.n = 0
+        self.t = 0
 
         for v in self._vessels:
             v.world = self
@@ -38,6 +39,7 @@ class World(object):
 
     def update_world(self, t, n):
         self.n = n
+        self.t = t
         for v in self._vessels:
             v.time = t
             v.update_model(self.n)

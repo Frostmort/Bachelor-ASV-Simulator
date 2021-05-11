@@ -70,9 +70,11 @@ class VO(Controller):
         VO[4] = VO[2] - np.arctan2(scanData[0] / 2, scanData[0])
 
         # find vector (xab) and angle (lab) of relative velocity
-        VO[5] = [vessel1.x[3] * np.cos(vessel1.x[2]), vessel1.x[3] * np.sin(vessel1.x[2])]
-        VO[6] = [-(vessel2.x[3] * np.cos(vessel2.x[2])), -(vessel2.x[3] * np.sin(vessel2.x[2]))]
-        VO[7] = [VO[5][0] + VO[6][0], VO[5][1] + VO[6][1]]
+        # VO[5] = [vessel1.x[3] * np.cos(vessel1.x[2]), vessel1.x[3] * np.sin(vessel1.x[2])]
+        # VO[6] = [(vessel2.x[3] * np.cos(vessel2.x[2])), (vessel2.x[3] * np.sin(vessel2.x[2]))]
+        VO[5] = [np.cos(vessel1.x[2]), np.sin(vessel1.x[2])]
+        VO[6] = [(np.cos(vessel2.x[2])), (np.sin(vessel2.x[2]))]
+        VO[7] = [VO[5][0] - VO[6][0], VO[5][1] - VO[6][1]]
         VO[8] = np.arctan2(VO[7][1], VO[7][0])
 
         return VO
@@ -147,24 +149,28 @@ class VO(Controller):
         # if self.checkNewVO(testVO, testVessel):
         #     return [testVessel.x[2], testVessel.x[3]]
 
+        print('test starboard')
         testVessel.x[3] = math.sqrt(RV[2][0]**2 + RV[2][1]**2)
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[2][1], RV[2][0]))
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
+        print('test port')
         testVessel.x[3] = math.sqrt(RV[3][0]**2 + RV[3][1]**2)
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[3][1],RV[3][0]))
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
+        print('test ahead')
         testVessel.x[3] = RV[0]
         testVessel.x[2] = v1.x[2]
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO, testVessel):
             return [testVessel.x[2], testVessel.x[3]]
 
+        print('faaan')
         return [v1.x[3], v1.x[2]]
 
     def checkNewVO(self, VO, vessel):

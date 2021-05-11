@@ -21,7 +21,7 @@ from ctrl_purepursuit import PurePursuit
 from ctrl_constant_bearing import ConstantBearing
 from ctrl_wafi import Wafi
 from ctrl_VO import VO
-from ctrl_AWC import AWC
+from ctrl_MOPSO import Mopso
 
 from matplotlib2tikz import save as tikz_save
 
@@ -77,6 +77,11 @@ class Scenario(object):
             xgf = np.array([250, 10, 0])
             ppf = Wafi(mode='wafi')
 
+        elif scenname == "mopso_test":
+            # Vessel 1
+            x01 = np.array([0, 0, np.pi / 4, 3.0, 0.0, 0])
+            xg1 = np.array([30, 86, np.pi / 4])
+
         else:
             # Vessel 1 (Main vessel)
             x01 = np.array([10.0, 10.0, 3.14/4, 2.5, 0, 0])
@@ -99,13 +104,15 @@ class Scenario(object):
 
             elif name == "astar":
                 controllers.append(AStar(x01, xg1, the_map))
-                controllers.append(LOSGuidance(switch_criterion="progress"))
+                controllers.append(LOSGuidance(switch_criterion="circle"))
 
             elif name == "hastar":
                 controllers.append(HybridAStar(x01, xg1, the_map))
                 controllers.append(LOSGuidance(switch_criterion="progress"))
 
-        controllers.append(VO())
+            elif name == "mopso":
+                controllers.append(Mopso(x01, xg1, the_map))
+
         v1 = Vessel(x01,
                     xg1,
                     self.h,
@@ -157,8 +164,12 @@ class Scenario(object):
                         vesseltype='viknes')
             vf.u_d = 2
             vessels.append(vf)
-        self.world = World(vessels, the_map)
 
+
+        elif scenname == "mopso_test":
+            pass
+
+        self.world = World(vessels, the_map)
         return
 
 
@@ -783,7 +794,7 @@ if __name__ == "__main__":
     #sim  = Simulation(scen, fig, axarr)
 
         #map,controller,scene
-    scen = Scenario("blank", ["astar"], "wafi")
+    scen = Scenario("s1", ["astar", "mopso"], "mopso_test")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

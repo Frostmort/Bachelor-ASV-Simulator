@@ -38,6 +38,8 @@ class LOSGuidance(Controller):
 
     def update(self, vobj, vesselArray):
         if not self.wp_initialized:
+            self.wp = None
+            self.cWP = 0
             if vobj.waypoints.any():
                 self.wp = vobj.waypoints
                 self.nWP = len(self.wp[:,0])

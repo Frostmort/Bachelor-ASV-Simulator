@@ -35,20 +35,39 @@ class Mopso(Controller):
         self.replan = replan
         self.path_found = False
 
-
+        self.alter = 0
 
         self.particles = []  # List of particles in the swarm
         self.best_pos = None  # Best particle of the swarm
         self.best_pos_z = np.inf  # Best particle of the swarm
 
-    def update(self, vessel_object, animate):
-        if self.to_be_updated:
-            tic = time.process_time()
-            vessel_object.waypoints = self.search(vessel_object, animate)
-            print("POS CPU time: %.3f" % (time.process_time() - tic))
-            self.to_be_updated = False
+    def update(self, vobj, vesselArray, animate = False):
+        tic = time.process_time()
+        if self.alter == 0:
+            vobj.controllers[1].wp = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
+            vobj.waypoints = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
+            self.alter += 1
+            print
+        if self.alter == 1 and vobj.controllers[1].cWP == 10:
+            vobj.wp = None
+            vobj.controllers[0].to_be_updated = True
+            vobj.controllers[1].wp_initialized = False
 
-    def search(self, vesselarray, animate):
+        # vobj.waypoints = self.search(vobj, animate)
+        # if vobj.controllers[1].cWP == 10 and self.alter == 0:
+        #     vobj.waypoints[11] = [0, 60]
+        #     vobj.waypoints[12] = [0, 70]
+        #     vobj.waypoints[13] = [0, 100]
+        #     print('Vegpunkt ', vobj.waypoints)
+        #
+        #     print("POS CPU time: %.3f" % (time.process_time() - tic))
+        #     self.alter += 1
+        # if vobj.controllers[1].cWP == 13 and self.alter == 1:
+        #     vobj.controllers[0].to_be_updated = True
+        #     vobj.controllers[1].wp_initialized = False
+        #     print('Vegpunkt 2 ', vobj.waypoints)
+
+    def search(self, vobj, animate):
         # Initialize plotting variables
         if animate == True:
 
@@ -58,10 +77,9 @@ class Mopso(Controller):
             fig = plt.figure("Particle Swarm Optimization")
 
         # Initialize swarm
-        v1 = vesselArray[0]
-        x0=v1.x[0:2]
+        x0 = vobj.x[0:2]
 
-        swarm = Swarm(POPULATION, V_MAX,self.goal,x0)
+        swarm = Swarm(POPULATION, V_MAX, self.goal, x0)
         # Initialize inertia weight
         inertia_weight = 0.5 + (np.random.rand() / 2)
         curr_iter=0
@@ -289,12 +307,12 @@ if __name__ == "__main__":
 
     x0 = np.array([0, 0, np.pi / 2, 3.0, 0.0, 0])
     xg = np.array([30, 86, np.pi / 4])
-    myvessel = Vessel(x0, xg, 0.05, 0.5, 1, [], True, 'viknes')
-    vesselArray = [myvessel]
     mopso = Mopso(x0, xg, mymap)
+    myvessel = Vessel(x0, xg, 0.05, 0.5, 1, [mopso], True, 'viknes')
+    vesselArray = [myvessel]
 
 
-    mopso.update(myvessel, animate=False)
+    mopso.update(myvessel, vesselArray, animate=False)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, autoscale_on=False)

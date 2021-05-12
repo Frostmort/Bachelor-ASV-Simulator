@@ -50,9 +50,9 @@ class Mopso(Controller):
             currentcWP = vobj.controllers[1].cWP
             if self.scan(vobj,v2)[0] <= 50 and not self.wpUpdated:
                 nextWP= self.search(vobj,animate)
-                for wp in nextWP:
-                    vobj.controllers[1].wp = np.insert(vobj.waypoints, currentcWP + i, nextWP, axis=0)
-                    vobj.waypoints = np.insert(vobj.waypoints, currentcWP + i, nextWP, axis=0)
+                for waypoint in nextWP:
+                    vobj.controllers[1].wp = np.insert(vobj.waypoints, currentcWP + i, waypoint, axis=0)
+                    vobj.waypoints = np.insert(vobj.waypoints, currentcWP + i, waypoint, axis=0)
                     i = i + 1
                 self.wpUpdated = True
 
@@ -158,15 +158,14 @@ class Mopso(Controller):
                 plt.show()
             # Check for convergence
             if abs(swarm.best_pos_z - GLOBAL_BEST) < CONVERGENCE:
-                print("The swarm has met convergence criteria after " + str(curr_iter) + " iterrations.", 'at:',swarm.best_pos[1],swarm.best_pos[0])
+                print("The swarm has met convergence criteria after " + str(curr_iter) + " iterations.", 'at:',swarm.best_pos[1],swarm.best_pos[0])
                 break
             curr_iter += 1
 
         if abs(swarm.best_pos_z - GLOBAL_BEST) > CONVERGENCE:
-            print("The swarm has converged after " + str(curr_iter) + " iterrations.", 'at:',
+            print("The swarm has converged after " + str(curr_iter) + " iterations.", 'at:',
                   swarm.best_pos)
 
-        print('bestpos:', self.best_pos)
         return swarm.best_pos
 
 

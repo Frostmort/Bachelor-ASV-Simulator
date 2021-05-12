@@ -34,6 +34,7 @@ class Mopso(Controller):
         self.to_be_updated = True
         self.replan = replan
         self.path_found = False
+        self.wpUpdated = False
 
         self.alter = 0
 
@@ -43,29 +44,37 @@ class Mopso(Controller):
 
     def update(self, vobj, vesselArray, animate = False):
         tic = time.process_time()
-        if self.alter == 0:
-            vobj.controllers[1].wp = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
-            vobj.waypoints = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
-            self.alter += 1
-            print
-        if self.alter == 1 and vobj.controllers[1].cWP == 10:
-            vobj.wp = None
-            vobj.controllers[0].to_be_updated = True
-            vobj.controllers[1].wp_initialized = False
+        if len(vesselArray) > 1:
+            v2 = vesselArray[1]
+            i = 1
+            currentcWP = vobj.controllers[1].cWP
+            if self.scan(vobj,v2)[0] <= 50 and not self.wpUpdated:
+                nextWP= self.search(vobj,animate)
+                for wp in nextWP:
+                    vobj.controllers[1].wp = np.insert(vobj.waypoints, currentcWP + i, nextWP, axis=0)
+                    vobj.waypoints = np.insert(vobj.waypoints, currentcWP + i, nextWP, axis=0)
+                    i = i + 1
+                self.wpUpdated = True
 
-        # vobj.waypoints = self.search(vobj, animate)
-        # if vobj.controllers[1].cWP == 10 and self.alter == 0:
-        #     vobj.waypoints[11] = [0, 60]
-        #     vobj.waypoints[12] = [0, 70]
-        #     vobj.waypoints[13] = [0, 100]
-        #     print('Vegpunkt ', vobj.waypoints)
+            if vobj.controllers[1].cWP == currentcWP + i and self.wpUpdated:
+                vobj.wp = None
+                vobj.controllers[0].to_be_updated = True
+                vobj.controllers[1].wp_initialized = False
+                self.wpUpdated = False
+
         #
-        #     print("POS CPU time: %.3f" % (time.process_time() - tic))
+        #
+        #
+        # if self.alter == 0:
+        #     vobj.controllers[1].wp = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
+        #     vobj.waypoints = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
         #     self.alter += 1
-        # if vobj.controllers[1].cWP == 13 and self.alter == 1:
+        #     print
+        # if self.alter == 1 and vobj.controllers[1].cWP == 10:
+        #     vobj.wp = None
         #     vobj.controllers[0].to_be_updated = True
         #     vobj.controllers[1].wp_initialized = False
-        #     print('Vegpunkt 2 ', vobj.waypoints)
+        #
 
     def search(self, vobj, animate):
         # Initialize plotting variables
@@ -157,7 +166,8 @@ class Mopso(Controller):
             print("The swarm has converged after " + str(curr_iter) + " iterrations.", 'at:',
                   swarm.best_pos)
 
-        return self.best_pos
+        print('bestpos:', self.best_pos)
+        return swarm.best_pos
 
 
     def cost_function(self, x1, y1):
@@ -171,7 +181,16 @@ class Mopso(Controller):
         cost = deviation_cost + statitc_obs_cost
         return cost
 
+    def scan(self, vessel1, vessel2):
+        xd = (vessel2.x[0] - vessel1.x[0])
+        yd = (vessel2.x[1] - vessel1.x[1])
+        distance = abs(np.sqrt(xd**2 + yd**2))
+        angle = np.arctan2(yd, xd)
 
+        return distance,angle
+
+
+##########################################################################################################
 class Swarm():
     def __init__(self, pop, v_max,goal,x0):
         self.particles = []  # List of particles in the swarm
@@ -216,6 +235,7 @@ class Swarm():
         return cost
 
 
+##########################################################################################################
 # Particle class
 class Particle():
     def __init__(self, x, y, z, velocity):

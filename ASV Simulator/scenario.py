@@ -79,8 +79,12 @@ class Scenario(object):
 
         elif scenname == "mopso_test":
             # Vessel 1
-            x01 = np.array([0, 0, np.pi / 4, 3.0, 0.0, 0])
-            xg1 = np.array([30, 86, np.pi / 4])
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
+            xg1 = np.array([75, 150, 0])
+
+            # Vessel 2 (WAFI)
+            x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
+            xg2 = np.array([0, 80, 0])
 
         else:
             # Vessel 1 (Main vessel)
@@ -167,7 +171,17 @@ class Scenario(object):
 
 
         elif scenname == "mopso_test":
-            pass
+            controllers2 = []
+            v2 = Vessel(x02,
+                        xg2,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        controllers2,
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            v2.u_d = 2.5
+            vessels.append(v2)
 
         self.world = World(vessels, the_map)
         return
@@ -794,13 +808,13 @@ if __name__ == "__main__":
     #sim  = Simulation(scen, fig, axarr)
 
         #map,controller,scene
-    scen = Scenario("s1", ["astar", "mopso"], "mopso_test")
+    scen = Scenario("blank", ["astar", "mopso"], "mopso_test")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()
     #plt.show()
     harry_plotter(sim)
-    harry_anim(sim)
+    #harry_anim(sim)
     plt.show()
 
 

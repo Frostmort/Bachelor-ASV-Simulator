@@ -65,7 +65,7 @@ class LOSGuidance(Controller):
                                                                   self.wp[self.cWP][0],
                                                                   self.wp[self.cWP][1]))
                     # print"Next waypoint: (%.2f, %.2f)" % (self.wp[self.cWP+1][0],
-                    #                                        self.wp[self.cWP+1][1])
+                    #                                         # self.wp[self.cWP+1][1])
                     self.cWP += 1
                     vobj.current_goal = self.wp[self.cWP + 1]
                     self.Xp = np.arctan2(self.wp[self.cWP + 1][1] - self.wp[self.cWP][1],

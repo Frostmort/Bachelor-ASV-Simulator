@@ -35,6 +35,7 @@ class Mopso(Controller):
         self.replan = replan
         self.path_found = False
         self.wpUpdated = False
+        self.currentcWP = 0
 
         self.alter = 0
 
@@ -46,31 +47,27 @@ class Mopso(Controller):
         tic = time.process_time()
         if len(vesselArray) > 1:
             v2 = vesselArray[1]
-            i = 1
-            currentcWP = vobj.controllers[1].cWP
             scanData = self.scan(vobj.x[0:2], v2.x[0:2])
             if scanData[0] <= self.scanRadius and not self.wpUpdated:
-                print("V1 position: ", vobj.x[0:2])
-                print("V2 position: ", v2.x[0:2])
-                nextWP= self.search(vesselArray, scanData)
+                self.currentcWP = vobj.controllers[1].cWP
+                nextWP = self.search(vobj.x[0:2], vesselArray, scanData)
+                for x in range(2, 4):
+                    print("Vegpunkt: ", nextWP)
+                    vobj.controllers[1].wp = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
+                    print("Ny vegpunkt: ", vobj.controllers[1].wp)
+                    vobj.waypoints = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
+                    scanData = self.scan(nextWP, v2.x[0:2])
+                    nextWP = self.search(nextWP, vesselArray, scanData)
 
-                print("nextWP = ", nextWP)
-                print("Current waypoint ", currentcWP)
-                print("Old waypoint: ", vobj.waypoints[16], vobj.waypoints[17], vobj.waypoints[18])
-                vobj.controllers[1].wp = np.insert(vobj.waypoints, currentcWP, nextWP, axis=0)
-                vobj.waypoints = np.insert(vobj.waypoints, currentcWP, nextWP, axis=0)
-                print("New waypoint: ", vobj.waypoints[16], vobj.waypoints[17], vobj.waypoints[18])
                 self.wpUpdated = True
 
-            if vobj.controllers[1].cWP == currentcWP + 1 and self.wpUpdated:
+            if vobj.controllers[1].cWP == self.currentcWP + 3 and self.wpUpdated:
                 vobj.wp = None
                 vobj.controllers[0].to_be_updated = True
                 vobj.controllers[1].wp_initialized = False
                 self.wpUpdated = False
 
-        #
-        #
-        #
+
         # if self.alter == 0:
         #     vobj.controllers[1].wp = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
         #     vobj.waypoints = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
@@ -80,17 +77,16 @@ class Mopso(Controller):
         #     vobj.wp = None
         #     vobj.controllers[0].to_be_updated = True
         #     vobj.controllers[1].wp_initialized = False
-        #
 
-    def search(self, vesselArray, scanData):
+
+    def search(self, vobjx, vesselArray, scanData):
 
         # Initialize swarm
-        vobj = vesselArray[0]
-        v2 = vesselArray[1]
-        x0 = vobj.x[0:2]
+        x0 = vobjx[0:2]
+        print("Sverm0 ", x0)
 
-        localMin = [vobj.x[0] - MAX_RANGE, vobj.x[1] - MAX_RANGE]
-        localMax = [vobj.x[0] + MAX_RANGE, vobj.x[1] + MAX_RANGE]
+        localMin = [vobjx[0] - MAX_RANGE, vobjx[1] - MAX_RANGE]
+        localMax = [vobjx[0] + MAX_RANGE, vobjx[1] + MAX_RANGE]
 
         swarm = Swarm(POPULATION, V_MAX, self.goal, x0, vesselArray, scanData)
         # Initialize inertia weight
@@ -276,13 +272,13 @@ class Swarm():
 
         distVesselGoal = np.sqrt((x2-self.x0[0])**2 + (y2-self.x0[1])**2)
 
-        deviation_cost = (np.sqrt((x2-x1)**2 + (y2-y1)**2))/distVesselGoal   #distance from goal
+        deviation_cost = (np.sqrt((x2-x1)**2 + (y2-y1)**2))   #distance from goal
 
         statitc_obs_cost = 0
         # if not self.graph.passable(pos):                    #Check if static obstacle
         #     statitc_obs_cost= BIGVAL
 
-        distance = self.scanData[0]    #check for dynamic obstacle
+        distance = np.hypot(x1 - self.vesselArray[1].x[0], y1 - self.vesselArray[1].x[1])    #check for dynamic obstacle
         if distance <= 5:
             dyn_obs_cost = BIGVAL
         elif 5 < distance <= 10:
@@ -315,12 +311,12 @@ class Swarm():
             return False
 
     def get_dangerzone(self, vobj):
-        phi = np.pi / 2
-        l = 100
+        phi = np.pi - 0.02
+        l = BIGVAL
         p0 = [vobj.x[0],vobj.x[1]]
         p1 = [((l*np.cos(vobj.x[2] - phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] - phi/2) + vobj.x[1]))]
         p2 = [((l*np.cos(vobj.x[2] + phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] + phi/2) + vobj.x[1]))]
-        print("Trækant: ", p0, p1, p2)
+       # print("Trækant: ", p0, p1, p2)
         return [p0, p1, p2]
 
 ##########################################################################################################

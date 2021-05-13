@@ -108,7 +108,7 @@ class Scenario(object):
 
             elif name == "astar":
                 controllers.append(AStar(x01, xg1, the_map))
-                controllers.append(LOSGuidance(switch_criterion="circle"))
+                controllers.append(LOSGuidance(switch_criterion="progress"))
 
             elif name == "hastar":
                 controllers.append(HybridAStar(x01, xg1, the_map))

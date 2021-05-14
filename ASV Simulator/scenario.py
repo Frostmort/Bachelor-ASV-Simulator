@@ -836,7 +836,7 @@ if __name__ == "__main__":
 
         #map,controller,scene
 
-    scen = Scenario("blank", ["astar", "mopso"], "standstill")
+    scen = Scenario("blank", ["astar", "VO"], "passright")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

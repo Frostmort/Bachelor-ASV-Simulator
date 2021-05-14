@@ -66,8 +66,10 @@ class VO(Controller):
         # find left and right boundaries of collision cone
         VO[1] = scanData[0]
         VO[2] = scanData[1]
-        VO[3] = VO[2] + np.arctan2(scanData[0] / 2, scanData[0])
-        VO[4] = VO[2] - np.arctan2(scanData[0] / 2, scanData[0])
+        angle = np.arctan2(scanData[0] / 2, scanData[0])
+
+        VO[3] = VO[2] + np.arctan2((scanData[0] / 2) + 5, scanData[0])
+        VO[4] = VO[2] - np.arctan2((scanData[0] / 2) + 5, scanData[0])
 
         # find vector (xab) and angle (lab) of relative velocity
         # VO[5] = [vessel1.x[3] * np.cos(vessel1.x[2]), vessel1.x[3] * np.sin(vessel1.x[2])]
@@ -153,9 +155,8 @@ class VO(Controller):
         testVessel.x[3] = math.sqrt(RV[2][0]**2 + RV[2][1]**2)
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[2][1], RV[2][0]))
         testVO = self.createVO(testVessel, v2, scanData)
-        newParams = [testVessel.x[3], testVessel.x[2]]
-        testVessel.x = copy.deepcopy(v1.x)
-        if self.checkNewVO(testVO) and not self.checkLand(testVessel, newParams):
+        if self.checkNewVO(testVO):
+            newParams = [testVessel.x[3], testVessel.x[2]]
             return newParams
 
         print('test port')
@@ -163,35 +164,40 @@ class VO(Controller):
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[3][1],RV[3][0]))
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO):
-            return [testVessel.x[3], testVessel.x[2]]
+            newParams = [testVessel.x[3], testVessel.x[2]]
+            return newParams
 
         print('test ahead')
         testVessel.x[3] = RV[0]
         testVessel.x[2] = v1.x[2]
         testVO = self.createVO(testVessel, v2, scanData)
-        if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[3], testVessel.x[2]]
+        if self.checkNewVO(testVO):
+            newParams = [testVessel.x[3], testVessel.x[2]]
+            return newParams
 
         print('test reverse starboard')
         testVessel.x[3] = RV[1]
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[2][1], RV[2][0]))
         testVO = self.createVO(testVessel, v2, scanData)
-        if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[3], testVessel.x[2]]
+        if self.checkNewVO(testVO):
+            newParams = [testVessel.x[3], testVessel.x[2]]
+            return newParams
 
         print('test reverse port')
         testVessel.x[3] = RV[1]
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[3][1],RV[3][0]))
         testVO = self.createVO(testVessel, v2, scanData)
-        if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[3], testVessel.x[2]]
+        if self.checkNewVO(testVO):
+            newParams = [testVessel.x[3], testVessel.x[2]]
+            return newParams
 
         print('test reverse')
         testVessel.x[3] = RV[1]
         testVessel.x[2] = v1.x[2]
         testVO = self.createVO(testVessel, v2, scanData)
-        if self.checkNewVO(testVO, testVessel):
-            return [testVessel.x[3], testVessel.x[2]]
+        if self.checkNewVO(testVO):
+            newParams = [testVessel.x[3], testVessel.x[2]]
+            return newParams
 
         print('faaan')
         return [0, v1.x[2]]

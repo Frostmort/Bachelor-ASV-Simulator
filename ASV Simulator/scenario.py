@@ -67,6 +67,7 @@ class Scenario(object):
             x02 = np.array([75, 150, -np.pi/2, 2.5, 0, 0])
             xg2 = np.array([75, 0, 0])
 
+
         elif scenname == "passright":
             # Vessel 1 (Main vessel)
             x01 = np.array([75, 0.0, np.pi / 2, 2.5, 0, 0])
@@ -834,6 +835,7 @@ if __name__ == "__main__":
     #sim  = Simulation(scen, fig, axarr)
 
         #map,controller,scene
+
     scen = Scenario("blank", ["astar", "mopso"], "standstill")
     sim  = Simulation(scen, savedata=False)
 

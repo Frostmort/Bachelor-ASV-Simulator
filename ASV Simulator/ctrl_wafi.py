@@ -6,7 +6,7 @@ from utils import Controller
 
 
 class Wafi(Controller):
-    def __init__(self, R2=60, mode='wafi', seed=1357, turnfreq=40):
+    def __init__(self, R2=60, mode='wafi', seed='rand', turnfreq=40):
 
 
         self.cGoal = None  # Current Goal
@@ -35,7 +35,10 @@ class Wafi(Controller):
 
             #initial setup for wafi, set seed and get starting goal
             if self.mode == 'wafi':
-#                self.rng.seed(self.seed)
+                if self.seed == 'rand':
+                    self.seed = random.randrange(0, 10000, 1)
+                self.rng.seed(self.seed)
+                print('Seed:', self.seed)
 
                 self.new_goal(vobj)
             self.is_initialized = True

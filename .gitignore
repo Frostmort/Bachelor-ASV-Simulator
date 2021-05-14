@@ -140,3 +140,6 @@ ASV Simulator/s2-hastar-vessel.txt
 *.mp4
 
 .idea/
+
+*.xml
+

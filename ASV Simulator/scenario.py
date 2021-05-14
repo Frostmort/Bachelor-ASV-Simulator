@@ -60,12 +60,12 @@ class Scenario(object):
 
         elif scenname == "VO_test":
             # Vessel 1 (Main vessel)
-            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
             xg1 = np.array([75, 150, 0])
 
             # Vessel 2 (WAFI)
-            x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
-            xg2 = np.array([0, 80, 0])
+            x02 = np.array([75, 150, -np.pi/2, 2.5, 0, 0])
+            xg2 = np.array([75, 0, 0])
 
         elif scenname == "passright":
             # Vessel 1 (Main vessel)
@@ -162,13 +162,18 @@ class Scenario(object):
             v2.u_d = 2.5
             vessels.append(v2)
 
+
         elif scenname == "passright":
+
+
             vf = Vessel(x0f,
                         xgf,
                         self.h,
                         self.dT,
                         self.N,
                         [],
+
+
                         is_main_vessel=False,
                         vesseltype='viknes')
             vf.u_d = 2.5

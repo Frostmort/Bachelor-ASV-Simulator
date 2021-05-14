@@ -23,7 +23,7 @@ class AStar(Controller):
 
         self.to_be_updated = True
 
-    def update(self, vobj, vesselArray):
+    def update(self, vobj, world, vesselArray):
         if self.to_be_updated:
             tic = time.process_time()
             self.start = self.graph.get_grid_id(vobj.x[0:2])

@@ -67,24 +67,30 @@ class Scenario(object):
             x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
             xg2 = np.array([0, 80, 0])
 
-        elif scenname == "wafi":
+        elif scenname == "passright":
             # Vessel 1 (Main vessel)
-            x01 = np.array([80, 0.0, np.pi / 2, 2.5, 0, 0])
-            xg1 = np.array([80, 150, 0])
+            x01 = np.array([75, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
 
-            # Vessel 2 (WAFI)
-            x0f = np.array([80, 80, np.pi*1.5, 2.5, 0, 0])
-            xgf = np.array([250, 10, 0])
-            ppf = Wafi(mode='wafi')
+            # Vessel 2
+            x0f = np.array([150, 80, np.pi, 2.5, 0, 0])
+            xgf = np.array([0, 80, 0])
 
-        elif scenname == "mopso_test":
+        elif scenname == "headon":
             # Vessel 1
             x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
             xg1 = np.array([75, 150, 0])
 
             # Vessel 2 (WAFI)
-            x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
-            xg2 = np.array([0, 80, 0])
+            x02 = np.array([75, 160, 3*np.pi/2, 2.5, 0, 0])
+            xg2 = np.array([75, 0, 0])
+
+        elif scenname == "standstill":
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
+            xg1 = np.array([75, 150, 0])
+
+            x02 = np.array([75, 80, 3 * np.pi / 2, 0, 0, 0])
+            xg2 = np.array([75, 0, 0])
 
         else:
             # Vessel 1 (Main vessel)
@@ -108,7 +114,7 @@ class Scenario(object):
 
             elif name == "astar":
                 controllers.append(AStar(x01, xg1, the_map))
-                controllers.append(LOSGuidance(switch_criterion="circle"))
+                controllers.append(LOSGuidance(switch_criterion="progress"))
 
             elif name == "hastar":
                 controllers.append(HybridAStar(x01, xg1, the_map))
@@ -156,21 +162,20 @@ class Scenario(object):
             v2.u_d = 2.5
             vessels.append(v2)
 
-        elif scenname == "wafi":
-            ppf.cGoal = v1.x
+        elif scenname == "passright":
             vf = Vessel(x0f,
                         xgf,
                         self.h,
                         self.dT,
                         self.N,
-                        [ppf],
+                        [],
                         is_main_vessel=False,
                         vesseltype='viknes')
-            vf.u_d = 2
+            vf.u_d = 2.5
             vessels.append(vf)
 
 
-        elif scenname == "mopso_test":
+        elif scenname == "headon":
             controllers2 = []
             v2 = Vessel(x02,
                         xg2,
@@ -181,6 +186,19 @@ class Scenario(object):
                         is_main_vessel=False,
                         vesseltype='viknes')
             v2.u_d = 2.5
+            vessels.append(v2)
+
+        elif scenname == "standstill":
+            controllers2 = []
+            v2 = Vessel(x02,
+                        xg2,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        controllers2,
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            v2.u_d = 0
             vessels.append(v2)
 
         self.world = World(vessels, the_map)
@@ -808,7 +826,7 @@ if __name__ == "__main__":
     #sim  = Simulation(scen, fig, axarr)
 
         #map,controller,scene
-    scen = Scenario("blank", ["astar", "mopso"], "mopso_test")
+    scen = Scenario("blank", ["astar", "mopso"], "standstill")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

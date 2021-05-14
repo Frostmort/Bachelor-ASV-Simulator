@@ -20,6 +20,7 @@ SOCIAL_C = 2.0  # Social coefficient factor
 CONVERGENCE = 0  # Convergence value
 MAX_ITER = 200  # Maximum number of iterations
 BIGVAL = 10000.
+MINDIST = 20
 
 
 class Mopso(Controller):
@@ -51,21 +52,22 @@ class Mopso(Controller):
             if scanData[0] <= self.scanRadius and not self.wpUpdated:
                 self.currentcWP = vobj.controllers[1].cWP
                 nextWP = self.search(vobj.x[0:2], vesselArray, scanData)
-                for x in range(2, 4):
-                    print("Vegpunkt: ", nextWP)
+                print("Vessel 1: ", vobj.x[0:2])
+                print("Vessel 2: ", v2.x[0:2])
+                for x in range(0, 3):
+                    print("Vegpunkt ", self.currentcWP + x, ": ", nextWP)
                     vobj.controllers[1].wp = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
-                    print("Ny vegpunkt: ", vobj.controllers[1].wp)
                     vobj.waypoints = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
                     scanData = self.scan(nextWP, v2.x[0:2])
                     nextWP = self.search(nextWP, vesselArray, scanData)
-
                 self.wpUpdated = True
 
-            if vobj.controllers[1].cWP == self.currentcWP + 3 and self.wpUpdated:
-                vobj.wp = None
-                vobj.controllers[0].to_be_updated = True
-                vobj.controllers[1].wp_initialized = False
-                self.wpUpdated = False
+            # if vobj.controllers[1].cWP == self.currentcWP + 1 and self.wpUpdated:
+            #     vobj.wp = None
+            #     # vobj.controllers[1].cWP = 0
+            #     vobj.controllers[0].to_be_updated = True
+            #     vobj.controllers[1].wp_initialized = False
+            #     self.wpUpdated = False
 
 
         # if self.alter == 0:
@@ -162,63 +164,7 @@ class Mopso(Controller):
         return [swarm.best_pos[0], swarm.best_pos[1]]
 
 
-    # def cost_function(self, x1, y1, vesselArray):
-    #     devW = 1
-    #     statW = 1
-    #     dynW = 1
-    #     weighingMatrix = np.array([[devW], [statW], [dynW]])
-    #     pos = x1,y1
-    #     x2,y2=self.goal[0],self.goal[1]
-    #
-    #     angle = self.scan(pos, vesselArray[1].x[0:2])[1]    #particle pos
-    #     newgoal = [x1 + 50*np.cos(angle-np.arctan(30/50)), y1 + 50*np.sin(angle-np.arctan(30/50))]
-    #     # deviation_cost = np.sqrt((newgoal[0] - x1)**2 + (newgoal[1] - y1)**2)
-    #
-    #     deviation_cost = np.sqrt((x2-x1)**2 + (y2-y1)**2)   #distance from goal
-    #
-    #     statitc_obs_cost = 0
-    #     if not self.graph.passable(pos):                    #Check if static obstacle
-    #         statitc_obs_cost= BIGVAL
-    #
-    #     distance = self.scan(pos, vesselArray[1].x[0:2])[0]    #check for dynamic obstacle
-    #     if distance <= 5:
-    #         dyn_obs_cost = BIGVAL
-    #     elif 5 < distance <= 10:
-    #         dyn_obs_cost = 100
-    #     elif 10 < distance <= 20:
-    #         dyn_obs_cost = 50
-    #     else:
-    #         dyn_obs_cost = 0
-    #
-    #     if self.is_inside(self.get_dangerzone(vesselArray[1]), pos):
-    #         dyn_obs_cost = BIGVAL
-    #     elif dyn_obs_cost < 0:
-    #         dyn_obs_cost = 0
-    #
-    #     cost = np.sum(np.array([[deviation_cost], [0], [0]]) * weighingMatrix)
-    #     return cost
 
-    # def get_dangerzone(self, vobj):
-    #     phi = np.pi / 2
-    #     l = 80
-    #     p0 = [vobj.x[0],vobj.x[1]]
-    #     p1 = [((l*np.cos(vobj.x[2] - phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] - phi/2) + vobj.x[1]))]
-    #     p2 = [((l*np.cos(vobj.x[2] + phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] + phi/2) + vobj.x[1]))]
-    #     return [p0, p1, p2]
-    #
-    # def is_inside(self, triangle, pos):           #check if point is inside cone
-    #     x1 = triangle[0]
-    #     x2 = triangle[1]
-    #     x3 = triangle[2]
-    #     xp = pos
-    #
-    #     c1 = (x2[0]-x1[0]) * (xp[1]-x1[1]) - (x2[1]-x1[1]) * (xp[0]-x1[0])
-    #     c2 = (x3[0]-x2[0]) * (xp[1]-x2[1]) - (x3[1]-x2[1]) * (xp[0]-x2[0])
-    #     c3 = (x1[0]-x3[0]) * (xp[1]-x3[1]) - (x1[1]-x3[1]) * (xp[0]-x3[0])
-    #     if (c1 < 0 and c2 < 0 and c3 < 0) or (c1 > 0 and c2 > 0 and c3 > 0):
-    #         return True
-    #     else:
-    #         return False
 
     def scan(self, vessel1, vessel2):
         xd = (vessel2[0] - vessel1[0])
@@ -266,10 +212,6 @@ class Swarm():
         pos = x1,y1
         x2,y2=self.goal[0],self.goal[1]
 
-        # angle = self.scanData[1]    #particle pos
-        # newgoal = [x1 + 50*np.cos(angle-np.arctan(30/50)), y1 + 50*np.sin(angle-np.arctan(30/50))]
-        # deviation_cost = np.sqrt((newgoal[0] - x1)**2 + (newgoal[1] - y1)**2)
-
         distVesselGoal = np.sqrt((x2-self.x0[0])**2 + (y2-self.x0[1])**2)
 
         deviation_cost = (np.sqrt((x2-x1)**2 + (y2-y1)**2))   #distance from goal
@@ -283,14 +225,17 @@ class Swarm():
             dyn_obs_cost = BIGVAL
         elif 5 < distance <= 10:
             dyn_obs_cost = 100
-        elif 10 < distance <= 20:
-            dyn_obs_cost = 50
+        # elif 10 < distance <= 20:
+        #     dyn_obs_cost = 50
         else:
             dyn_obs_cost = 0
 
-        if self.is_inside(self.get_dangerzone(self.vesselArray[1]), pos):
+        if self.is_inside(self.get_dangercone(self.vesselArray[1]), pos):
             dyn_obs_cost = BIGVAL
-        elif dyn_obs_cost < 0:
+        if self.is_inside2(self.get_dangercube(self.vesselArray[1]), pos):
+            dyn_obs_cost = BIGVAL
+
+        if dyn_obs_cost < 0:
             dyn_obs_cost = 0
 
         cost = np.sum(np.array([[deviation_cost], [statitc_obs_cost], [dyn_obs_cost]]) * weighingMatrix)
@@ -310,14 +255,52 @@ class Swarm():
         else:
             return False
 
-    def get_dangerzone(self, vobj):
-        phi = np.pi - 0.02
+    def is_inside2(self,square,pos):
+        xp = pos
+        x1 = square[0]
+        x2 = square[1]
+        x3 = square[2]
+        x4 = square[3]
+
+            #x1,x2 and xp
+        area1 = np.abs((x1[0]*x2[1] + x2[0]*xp[1] + xp[0]*x1[1]) - (x1[1]*x2[0] + x2[1]*xp[0] + xp[1]*x1[0]))*0.5
+
+            #x2,x3 and xp
+        area2 = np.abs((x3[0]*x2[1] + x2[0]*xp[1] + xp[0]*x3[1]) - (x3[1]*x2[0] + x2[1]*xp[0] + xp[1]*x3[0]))*0.5
+
+            #x3,x4 and xp
+        area3 = np.abs((x3[0]*x4[1] + x4[0]*xp[1] + xp[0]*x3[1]) - (x3[1]*x4[0] + x4[1]*xp[0] + xp[1]*x3[0]))*0.5
+
+            #x1,x4 and xp
+        area4 = np.abs((x1[0]*x4[1] + x4[0]*xp[1] + xp[0]*x1[1]) - (x1[1]*x4[0] + x4[1]*xp[0] + xp[1]*x1[0]))*0.5
+
+        areasquare = np.hypot(x1[0] - x2[0], x1[1] - x2[1]) * np.hypot(x1[0] - x3[0], x1[1] - x3[1])
+
+        if np.sum([area1,area2,area3,area4]) <= areasquare:
+            return True
+        else:
+            return False
+    def get_dangercone(self, vobj):
+        phi = 2.02
         l = BIGVAL
         p0 = [vobj.x[0],vobj.x[1]]
         p1 = [((l*np.cos(vobj.x[2] - phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] - phi/2) + vobj.x[1]))]
         p2 = [((l*np.cos(vobj.x[2] + phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] + phi/2) + vobj.x[1]))]
-       # print("Trækant: ", p0, p1, p2)
+
+        # print("Trækant: ", p0, p1, p2)
+
         return [p0, p1, p2]
+
+    def get_dangercube(self, vobj):
+        l = 2 * MAX_RANGE
+        p0 = [MINDIST * np.cos(vobj.x[2] - np.pi/2) + vobj.x[0], MINDIST * np.sin(vobj.x[2] - np.pi/2) + vobj.x[1]]
+        p1 = [MINDIST * np.cos(vobj.x[2] + np.pi/2) + vobj.x[0], MINDIST * np.sin(vobj.x[2] + np.pi/2) + vobj.x[1]]
+        p2 = [l * np.cos(vobj.x[2]) + p0[0], l * np.sin(vobj.x[2]) + p0[1]]
+        p3 = [l * np.cos(vobj.x[2]) + p1[0], l * np.sin(vobj.x[2]) + p1[1]]
+
+        #print("Firkantinje: ", p0, p1, p2, p3)
+
+        return [p0, p1, p2, p3]
 
 ##########################################################################################################
 # Particle class

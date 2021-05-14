@@ -48,15 +48,18 @@ class World(object):
         self.minDistance = self.getMinDistance()
 
     def getMinDistance(self):
-        v1 = self._vessels[0]
-        v2 = self._vessels[1]
-        xd = v2.x[0] - v1.x[0]
-        yd = v2.x[1] - v1.x[1]
-        d = math.sqrt(xd**2 + yd**2)
-        if d < self.minDistance:
-            return d
+        if len(self._vessels) > 1:
+            v1 = self._vessels[0]
+            v2 = self._vessels[1]
+            xd = v2.x[0] - v1.x[0]
+            yd = v2.x[1] - v1.x[1]
+            d = math.sqrt(xd**2 + yd**2)
+            if d < self.minDistance:
+                return d
+            else:
+                return self.minDistance
         else:
-            return self.minDistance
+            return 0
 
     def is_occupied_list(self, lst, tlst):
         for ii in range(0,len(lst)):

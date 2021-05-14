@@ -26,6 +26,7 @@ class AStar(Controller):
     def update(self, vobj, world, vesselArray):
         if self.to_be_updated:
             tic = time.process_time()
+            self.start = self.graph.get_grid_id(vobj.x[0:2])
             vobj.waypoints = self.search(vobj)
             print("A-star CPU time: %.3f" % (time.process_time() - tic))
             self.to_be_updated = False

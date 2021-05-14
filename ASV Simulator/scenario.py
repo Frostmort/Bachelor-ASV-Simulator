@@ -123,6 +123,9 @@ class Scenario(object):
             elif name == "mopso":
                 controllers.append(Mopso(x01, xg1, the_map))
 
+            elif name == "VO":
+                controllers.append(VO())
+
         v1 = Vessel(x01,
                     xg1,
                     self.h,

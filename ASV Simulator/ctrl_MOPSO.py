@@ -44,7 +44,7 @@ class Mopso(Controller):
         self.best_pos = None  # Best particle of the swarm
         self.best_pos_z = np.inf  # Best particle of the swarm
 
-    def update(self, vobj, vesselArray):
+    def update(self, vobj, world, vesselArray):
         tic = time.process_time()
         if len(vesselArray) > 1:
             v2 = vesselArray[1]

@@ -72,8 +72,6 @@ class VO(Controller):
         VO[4] = VO[2] - np.arctan2((scanData[0] / 2) + 5, scanData[0])
 
         # find vector (xab) and angle (lab) of relative velocity
-        # VO[5] = [vessel1.x[3] * np.cos(vessel1.x[2]), vessel1.x[3] * np.sin(vessel1.x[2])]
-        # VO[6] = [(vessel2.x[3] * np.cos(vessel2.x[2])), (vessel2.x[3] * np.sin(vessel2.x[2]))]
         VO[5] = [np.cos(vessel1.x[2]), np.sin(vessel1.x[2])]
         VO[6] = [(np.cos(vessel2.x[2])), (np.sin(vessel2.x[2]))]
         VO[7] = [VO[5][0] - VO[6][0], VO[5][1] - VO[6][1]]

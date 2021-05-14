@@ -62,25 +62,6 @@ class Mopso(Controller):
                     nextWP = self.search(nextWP, vesselArray, scanData)
                 self.wpUpdated = True
 
-            # if vobj.controllers[1].cWP == self.currentcWP + 1 and self.wpUpdated:
-            #     vobj.wp = None
-            #     # vobj.controllers[1].cWP = 0
-            #     vobj.controllers[0].to_be_updated = True
-            #     vobj.controllers[1].wp_initialized = False
-            #     self.wpUpdated = False
-
-
-        # if self.alter == 0:
-        #     vobj.controllers[1].wp = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
-        #     vobj.waypoints = np.insert(vobj.waypoints, 10, [0, 80], axis = 0)
-        #     self.alter += 1
-        #     print
-        # if self.alter == 1 and vobj.controllers[1].cWP == 10:
-        #     vobj.wp = None
-        #     vobj.controllers[0].to_be_updated = True
-        #     vobj.controllers[1].wp_initialized = False
-
-
     def search(self, vobjx, vesselArray, scanData):
 
         # Initialize swarm
@@ -117,15 +98,6 @@ class Mopso(Controller):
 
                 # Update particle's current position
                 particle.pos += particle.velocity
-
-
-                # Check if particle is within boundaries
-                # if np.hypot(particle.pos[0] - x0[0], particle.pos[1] - x0[1]) > MAX_RANGE:
-                #     r = np.random.uniform(MIN_RANGE, MAX_RANGE)
-                #     theta = np.random.uniform(MIN_RANGE, MAX_RANGE * np.pi)
-                #     particle.pos[0] = (np.sqrt(r) * np.cos(theta)) + x0[0]
-                #     particle.pos[1] = (np.sqrt(r) * np.sin(theta)) + x0[1]
-
 
                 particle.pos_z = swarm.cost_function(particle.pos[0], particle.pos[1], vesselArray)
 
@@ -212,7 +184,6 @@ class Swarm():
         pos = x1,y1
         x2,y2=self.goal[0],self.goal[1]
 
-        distVesselGoal = np.sqrt((x2-self.x0[0])**2 + (y2-self.x0[1])**2)
 
         deviation_cost = (np.sqrt((x2-x1)**2 + (y2-y1)**2))   #distance from goal
 
@@ -302,7 +273,6 @@ class Swarm():
 
         return [p0, p1, p2, p3]
 
-##########################################################################################################
 # Particle class
 class Particle():
     def __init__(self, x, y, z, velocity):
@@ -311,7 +281,6 @@ class Particle():
         self.velocity = velocity
         self.best_pos = self.pos.copy()
 
-##########################################################################################################
 class SearchGrid(object):
     """General purpose N-dimentional search grid."""
     def __init__(self, the_map, gridsize, N=2, parent=None):
@@ -385,8 +354,6 @@ class SearchGrid(object):
 
         return results
 
-
-#############################################################################
 
 
 if __name__ == "__main__":

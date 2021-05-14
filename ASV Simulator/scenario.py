@@ -22,6 +22,7 @@ from ctrl_constant_bearing import ConstantBearing
 from ctrl_wafi import Wafi
 from ctrl_VO import VO
 from ctrl_MOPSO import Mopso
+from ctrl_VOPSO import Vopso
 
 from matplotlib2tikz import save as tikz_save
 
@@ -126,6 +127,9 @@ class Scenario(object):
 
             elif name == "VO":
                 controllers.append(VO())
+
+            elif name == "vopso":
+                controllers.append(Vopso(x01, xg1, the_map))
 
         v1 = Vessel(x01,
                     xg1,
@@ -836,7 +840,7 @@ if __name__ == "__main__":
 
         #map,controller,scene
 
-    scen = Scenario("blank", ["astar", "VO"], "passright")
+    scen = Scenario("blank", ["astar", "vopso"], "passright")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

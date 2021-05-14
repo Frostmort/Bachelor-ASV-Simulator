@@ -23,7 +23,7 @@ BIGVAL = 10000.
 MINDIST = 20
 
 
-class Mopso(Controller):
+class Vopso(Controller):
     def __init__(self, x0, xg, the_map, search_radius=50, replan=False):
         self.start = x0[0:3]
         self.goal = xg[0:3]
@@ -48,30 +48,41 @@ class Mopso(Controller):
         tic = time.process_time()
         if len(vesselArray) > 1:
             v2 = vesselArray[1]
+            resetPoint = -1
             scanData = self.scan(vobj.x[0:2], v2.x[0:2])
             if scanData[0] <= self.scanRadius and not self.wpUpdated:
-                self.currentcWP = vobj.controllers[1].cWP
-                nextWP = self.search(vobj.x[0:2], vesselArray, scanData)
-                print("Vessel 1: ", vobj.x[0:2])
-                print("Vessel 2: ", v2.x[0:2])
-                for x in range(0, 3):
-                    print("Vegpunkt ", self.currentcWP + x, ": ", nextWP)
-                    vobj.controllers[1].wp = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
-                    vobj.waypoints = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
-                    scanData = self.scan(nextWP, v2.x[0:2])
-                    nextWP = self.search(nextWP, vesselArray, scanData)
-                self.wpUpdated = True
 
-    def search(self, vobjx, vesselArray, scanData):
+                # Create VO
+                VOarray = self.createVO(vobj, v2, scanData)
+                if VOarray[3] > VOarray[8] > VOarray[4]:
+                    # Implement MOPSO
+                    self.currentcWP = vobj.controllers[1].cWP
+                    nextWP = self.search(vobj.x[0:2], vesselArray, scanData, VOarray)
+                    print("Vessel 1: ", vobj.x[0:2])
+                    print("Vessel 2: ", v2.x[0:2])
+                    for x in range(0, 2):
+                        print("Vegpunkt ", self.currentcWP + x, ": ", nextWP)
+                        vobj.controllers[1].wp = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
+                        vobj.waypoints = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
+                        scanData = self.scan(nextWP, v2.x[0:2])
+                        nextWP = self.search(nextWP, vesselArray, scanData, VOarray)
+                    self.wpUpdated = True
+
+            if vobj.controllers[1].cWP == self.currentcWP + 1:
+                vobj.wp = None
+                vobj.controllers[1].cWP = 0
+                vobj.controllers[0].to_be_updated = True
+                vobj.controllers[1].wp_initialized = False
+                self.wpUpdated = False
+
+
+    def search(self, vobjx, vesselArray, scanData, VOarray):
 
         # Initialize swarm
         x0 = vobjx[0:2]
         print("Sverm0 ", x0)
 
-        localMin = [vobjx[0] - MAX_RANGE, vobjx[1] - MAX_RANGE]
-        localMax = [vobjx[0] + MAX_RANGE, vobjx[1] + MAX_RANGE]
-
-        swarm = Swarm(POPULATION, V_MAX, self.goal, x0, vesselArray, scanData)
+        swarm = Swarm(POPULATION, V_MAX, self.goal, x0, vesselArray, scanData, VOarray)
         # Initialize inertia weight
         inertia_weight = 0.5 + (np.random.rand() / 2)
         curr_iter=0
@@ -135,9 +146,6 @@ class Mopso(Controller):
         print("Biggast: ", biggest)
         return [swarm.best_pos[0], swarm.best_pos[1]]
 
-
-
-
     def scan(self, vessel1, vessel2):
         xd = (vessel2[0] - vessel1[0])
         yd = (vessel2[1] - vessel1[1])
@@ -146,10 +154,34 @@ class Mopso(Controller):
 
         return [distance, angle]
 
+    def createVO(self, vessel1, vessel2, scanData):
+        VO = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        # find which side crossing vessel is coming from
+        if vessel2.x[0] > vessel1.x[0] and (np.pi / 2 < vessel2.x[2] < 3 * np.pi / 2):
+            VO[0] = 'r'
+        elif vessel2.x[0] < vessel1.x[0] and (vessel2.x[2] < np.pi / 2 or vessel2.x[2] > 3 * np.pi / 2):
+            VO[0] = 'l'
+        else:
+            VO[0] = 'n'
 
+        # find left and right boundaries of collision cone
+        VO[1] = scanData[0]
+        VO[2] = scanData[1]
+        angle = np.arctan2(scanData[0] / 2, scanData[0])
+
+        VO[3] = VO[2] + np.arctan2((scanData[0] / 2) + 5, scanData[0])
+        VO[4] = VO[2] - np.arctan2((scanData[0] / 2) + 5, scanData[0])
+
+        # find vector (xab) and angle (lab) of relative velocity
+        VO[5] = [np.cos(vessel1.x[2]), np.sin(vessel1.x[2])]
+        VO[6] = [(np.cos(vessel2.x[2])), (np.sin(vessel2.x[2]))]
+        VO[7] = [VO[5][0] - VO[6][0], VO[5][1] - VO[6][1]]
+        VO[8] = np.arctan2(VO[7][1], VO[7][0])
+
+        return VO
 ##########################################################################################################
 class Swarm():
-    def __init__(self, pop, v_max, goal, x0, vesselArray, scanData):
+    def __init__(self, pop, v_max, goal, x0, vesselArray, scanData, VOarray):
         self.particles = []         # List of particles in the swarm
         self.best_pos = None        # Best particle of the swarm
         self.best_pos_z = np.inf    # Best particle of the swarm
@@ -157,12 +189,12 @@ class Swarm():
         self.goal = goal
         self.scanData = scanData
         self.vesselArray = vesselArray
+        self.VOarray = VOarray
         for _ in range(pop):
             r = np.random.uniform(MIN_RANGE, MAX_RANGE)
             theta = np.random.uniform(MIN_RANGE, MAX_RANGE*np.pi)
             x = (r * np.cos(theta))+x0[0]
             y = (r * np.sin(theta))+x0[1]
-
 
             z = self.cost_function(x, y, goal)
             velocity = np.random.rand(2) * v_max
@@ -184,26 +216,21 @@ class Swarm():
         pos = x1,y1
         x2,y2=self.goal[0],self.goal[1]
 
-
         deviation_cost = (np.sqrt((x2-x1)**2 + (y2-y1)**2))   #distance from goal
 
         statitc_obs_cost = 0
-        # if not self.graph.passable(pos):                    #Check if static obstacle
-        #     statitc_obs_cost= BIGVAL
 
         distance = np.hypot(x1 - self.vesselArray[1].x[0], y1 - self.vesselArray[1].x[1])    #check for dynamic obstacle
         if distance <= 5:
             dyn_obs_cost = BIGVAL
         elif 5 < distance <= 10:
             dyn_obs_cost = 100
-        # elif 10 < distance <= 20:
-        #     dyn_obs_cost = 50
+        elif 10 < distance <= 20:
+            dyn_obs_cost = 50
         else:
             dyn_obs_cost = 0
 
-        if self.is_inside(self.get_dangercone(self.vesselArray[1]), pos):
-            dyn_obs_cost = BIGVAL
-        if self.is_inside2(self.get_dangercube(self.vesselArray[1]), pos):
+        if self.is_inside(self.get_dangercone(), pos):
             dyn_obs_cost = BIGVAL
 
         if dyn_obs_cost < 0:
@@ -226,53 +253,30 @@ class Swarm():
         else:
             return False
 
-    def is_inside2(self,square,pos):
-        xp = pos
-        x1 = square[0]
-        x2 = square[1]
-        x3 = square[2]
-        x4 = square[3]
+    def get_dangercone(self):
+        v1 = self.vesselArray[0]
+        v2 = self.vesselArray[1]
+        VOarray = self.VOarray
+        tc = self.getCollisionTime(v1, v2)
 
-            #x1,x2 and xp
-        area1 = np.abs((x1[0]*x2[1] + x2[0]*xp[1] + xp[0]*x1[1]) - (x1[1]*x2[0] + x2[1]*xp[0] + xp[1]*x1[0]))*0.5
+        p0 = [v1.x[0] + (v2.x[3] * np.cos(v2.x[2]))*tc, v1.x[1] + (v2.x[3] * np.sin(v2.x[2]))*tc]
+        p1 = [((self.scanData[0] + v2.x[3]*tc) * np.cos(VOarray[3]) + p0[0]), (self.scanData[0] + v2.x[3]*tc) * np.sin(VOarray[3]) + p0[1]]
+        p2 = [((self.scanData[0] + v2.x[3]*tc) * np.cos(VOarray[4]) + p0[0]), (self.scanData[0] + v2.x[3]*tc) * np.sin(VOarray[4]) + p0[1]]
 
-            #x2,x3 and xp
-        area2 = np.abs((x3[0]*x2[1] + x2[0]*xp[1] + xp[0]*x3[1]) - (x3[1]*x2[0] + x2[1]*xp[0] + xp[1]*x3[0]))*0.5
-
-            #x3,x4 and xp
-        area3 = np.abs((x3[0]*x4[1] + x4[0]*xp[1] + xp[0]*x3[1]) - (x3[1]*x4[0] + x4[1]*xp[0] + xp[1]*x3[0]))*0.5
-
-            #x1,x4 and xp
-        area4 = np.abs((x1[0]*x4[1] + x4[0]*xp[1] + xp[0]*x1[1]) - (x1[1]*x4[0] + x4[1]*xp[0] + xp[1]*x1[0]))*0.5
-
-        areasquare = np.hypot(x1[0] - x2[0], x1[1] - x2[1]) * np.hypot(x1[0] - x3[0], x1[1] - x3[1])
-
-        if np.sum([area1,area2,area3,area4]) <= areasquare:
-            return True
-        else:
-            return False
-    def get_dangercone(self, vobj):
-        phi = 2.02
-        l = BIGVAL
-        p0 = [vobj.x[0],vobj.x[1]]
-        p1 = [((l*np.cos(vobj.x[2] - phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] - phi/2) + vobj.x[1]))]
-        p2 = [((l*np.cos(vobj.x[2] + phi/2)) + vobj.x[0]), ((l*np.sin(vobj.x[2] + phi/2) + vobj.x[1]))]
-
-        # print("Trækant: ", p0, p1, p2)
+        #print("Trækant: ", p0, p1, p2)
 
         return [p0, p1, p2]
 
-    def get_dangercube(self, vobj):
-        l = 2 * MAX_RANGE
-        p0 = [MINDIST * np.cos(vobj.x[2] - np.pi/2) + vobj.x[0], MINDIST * np.sin(vobj.x[2] - np.pi/2) + vobj.x[1]]
-        p1 = [MINDIST * np.cos(vobj.x[2] + np.pi/2) + vobj.x[0], MINDIST * np.sin(vobj.x[2] + np.pi/2) + vobj.x[1]]
-        p2 = [l * np.cos(vobj.x[2]) + p0[0], l * np.sin(vobj.x[2]) + p0[1]]
-        p3 = [l * np.cos(vobj.x[2]) + p1[0], l * np.sin(vobj.x[2]) + p1[1]]
+    def getCollisionTime(self, v1, v2):
+        r1 = ([v1.x[0], v1.x[3] * np.cos(v1.x[2]), v1.x[1], v1.x[3] * np.sin(v1.x[2])])  # vessel 1 velocity vector
+        r2 = ([v2.x[0], v2.x[3] * np.cos(v2.x[2]), v2.x[1], v2.x[3] * np.sin(v2.x[2])])  # vessel 2 velocity vector
 
-        #print("Firkantinje: ", p0, p1, p2, p3)
+        tx = (r2[0] - r1[0]) / (r1[1] - r2[1]) # time to intersect in x
+        ty = (r2[2] - r1[2]) / (r1[3] - r2[3]) # time to intersect in y
 
-        return [p0, p1, p2, p3]
+        return (tx + ty) / 2 # returns average of x and y times
 
+##########################################################################################################
 # Particle class
 class Particle():
     def __init__(self, x, y, z, velocity):
@@ -281,6 +285,7 @@ class Particle():
         self.velocity = velocity
         self.best_pos = self.pos.copy()
 
+##########################################################################################################
 class SearchGrid(object):
     """General purpose N-dimentional search grid."""
     def __init__(self, the_map, gridsize, N=2, parent=None):
@@ -354,6 +359,8 @@ class SearchGrid(object):
 
         return results
 
+
+#############################################################################
 
 
 if __name__ == "__main__":

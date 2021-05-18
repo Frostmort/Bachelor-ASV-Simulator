@@ -55,7 +55,7 @@ class Mopso(Controller):
                 print("Vessel 1: ", vobj.x[0:2])
                 print("Vessel 2: ", v2.x[0:2])
                 for x in range(0, 3):
-                    print("Vegpunkt ", self.currentcWP + x, ": ", nextWP)
+                    print("Waypoint ", self.currentcWP + x, ": ", nextWP)
                     vobj.controllers[1].wp = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
                     vobj.waypoints = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
                     scanData = self.scan(nextWP, v2.x[0:2])
@@ -132,7 +132,7 @@ class Mopso(Controller):
             print("The swarm has reached max iterations after " + str(curr_iter) + " iterations.", 'at:',
                   swarm.best_pos)
         print("Swarm: ", swarm.best_pos)
-        print("Biggast: ", biggest)
+        print("Biggest: ", biggest)
         return [swarm.best_pos[0], swarm.best_pos[1]]
 
 
@@ -269,7 +269,7 @@ class Swarm():
         p2 = [l * np.cos(vobj.x[2]) + p0[0], l * np.sin(vobj.x[2]) + p0[1]]
         p3 = [l * np.cos(vobj.x[2]) + p1[0], l * np.sin(vobj.x[2]) + p1[1]]
 
-        #print("Firkantinje: ", p0, p1, p2, p3)
+        #print("Square: ", p0, p1, p2, p3)
 
         return [p0, p1, p2, p3]
 

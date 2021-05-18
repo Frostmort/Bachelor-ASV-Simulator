@@ -197,7 +197,7 @@ class VO(Controller):
             newParams = [testVessel.x[3], testVessel.x[2]]
             return newParams
 
-        print('faaan')
+        print('No tests passed')
         return [0, v1.x[2]]
 
     def checkNewVO(self, VO):

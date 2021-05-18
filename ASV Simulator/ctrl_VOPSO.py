@@ -61,7 +61,7 @@ class Vopso(Controller):
                     print("Vessel 1: ", vobj.x[0:2])
                     print("Vessel 2: ", v2.x[0:2])
                     for x in range(0, 2):
-                        print("Vegpunkt ", self.currentcWP + x, ": ", nextWP)
+                        print("Waypoint ", self.currentcWP + x, ": ", nextWP)
                         vobj.controllers[1].wp = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
                         vobj.waypoints = np.insert(vobj.waypoints, self.currentcWP + x, nextWP, axis = 0)
                         scanData = self.scan(nextWP, v2.x[0:2])
@@ -143,7 +143,7 @@ class Vopso(Controller):
             print("The swarm has reached max iterations after " + str(curr_iter) + " iterations.", 'at:',
                   swarm.best_pos)
         print("Swarm: ", swarm.best_pos)
-        print("Biggast: ", biggest)
+        print("Biggest: ", biggest)
         return [swarm.best_pos[0], swarm.best_pos[1]]
 
     def scan(self, vessel1, vessel2):
@@ -179,7 +179,7 @@ class Vopso(Controller):
         VO[8] = np.arctan2(VO[7][1], VO[7][0])
 
         return VO
-##########################################################################################################
+
 class Swarm():
     def __init__(self, pop, v_max, goal, x0, vesselArray, scanData, VOarray):
         self.particles = []         # List of particles in the swarm
@@ -263,7 +263,7 @@ class Swarm():
         p1 = [((self.scanData[0] + v2.x[3]*tc) * np.cos(VOarray[3]) + p0[0]), (self.scanData[0] + v2.x[3]*tc) * np.sin(VOarray[3]) + p0[1]]
         p2 = [((self.scanData[0] + v2.x[3]*tc) * np.cos(VOarray[4]) + p0[0]), (self.scanData[0] + v2.x[3]*tc) * np.sin(VOarray[4]) + p0[1]]
 
-        #print("Trækant: ", p0, p1, p2)
+        #print("Triangle: ", p0, p1, p2)
 
         return [p0, p1, p2]
 
@@ -276,7 +276,7 @@ class Swarm():
 
         return (tx + ty) / 2 # returns average of x and y times
 
-##########################################################################################################
+
 # Particle class
 class Particle():
     def __init__(self, x, y, z, velocity):
@@ -285,7 +285,7 @@ class Particle():
         self.velocity = velocity
         self.best_pos = self.pos.copy()
 
-##########################################################################################################
+
 class SearchGrid(object):
     """General purpose N-dimentional search grid."""
     def __init__(self, the_map, gridsize, N=2, parent=None):

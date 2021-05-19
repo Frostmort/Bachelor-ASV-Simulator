@@ -1,12 +1,9 @@
 import copy
-import sys, time
-import heapq
+import time
+
 
 import numpy as np
-import math as math
-import matplotlib.pyplot as plt
 
-from map import Map
 from vessel import Vessel
 from utils import Controller, PriorityQueue
 
@@ -18,14 +15,12 @@ class VO(Controller):
         self.scanDistance = scanDistance
         self.tc = 0
         self.world = 0
-        self.collisionCounter = 0
         self.newVesselParams = [0, 0]
-        #self.VOarray = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-        self.collisionAvoidanceActive = False
+        self.totalTime = 0
 
     def update(self, vobj, world, vesselArray):
         self.world = world
-
+        tic = time.process_time_ns()
         for v in vesselArray:
             if not v.is_main_vessel:
                 scanData = self.scan(vobj, v)
@@ -33,17 +28,17 @@ class VO(Controller):
                     VOarray = self.createVO(vobj, v, scanData)
                     if VOarray[3] > VOarray[8] > VOarray[4]:
                         print("Collision imminent!")
-                        self.collisionAvoidanceActive = True
-                        self.collisonCounter = 0
                         self.newVesselParams = self.collisionAvoidance(vobj, v, scanData)
                         vobj.u_d = self.newVesselParams[0]
                         vobj.psi_d = self.newVesselParams[1]
+                        self.totalTime = self.totalTime + (time.process_time_ns() - tic)
+                        print(self.totalTime)
 
 
     def scan(self, vessel1, vessel2):
         xd = (vessel2.x[0] - vessel1.x[0])
         yd = (vessel2.x[1] - vessel1.x[1])
-        distance = abs(math.sqrt(xd ** 2 + yd ** 2))
+        distance = abs(np.sqrt(xd ** 2 + yd ** 2))
         angle = np.arctan2(yd, xd)
 
         return [distance, angle]
@@ -83,24 +78,11 @@ class VO(Controller):
 
     def collisionAvoidance(self, v1, v2, scanData):
 
-        # xyc = self.getCollisionPoint(v1, v2)
-        t0 = time.process_time_ns()
         xyc = [0, 0]
         self.tc = self.getCollisionTime(v1, v2, xyc)
         RV = self.getRV(v1)
         newParams = self.getRAV(v1, v2, RV, scanData)
-        tf = time.process_time_ns() - t0
-        print('Avoidance calculated in', tf)
         return newParams
-
-
-    def getCollisionPoint(self, v1, v2):
-        xc = ((v2.x[1] - v1.x[1]) - (v2.x[0] * np.tan(v2.x[2]) - v1.x[0] * np.tan[v1.x[2]])) \
-             / (np.tan(v1.x[2]) - np.tan(v2.x[2]))
-        yc = ((v2.x[0] - v1.x[0]) - (v2.x[1] * (1 / np.tan(v2.x[2])) - v1.x[1] * (1 / np.tan(v1.x[2])))) \
-             / ((1 / np.tan(v1.x[2])) - (1 / np.tan(v2.x[2])))
-
-        return [xc, yc]
 
     def getCollisionTime(self, v1, v2, xyc):
         r1 = ([v1.x[0], v1.x[3] * np.cos(v1.x[2]), v1.x[1], v1.x[3] * np.sin(v1.x[2])])  # vessel 1 velocity vector
@@ -144,13 +126,8 @@ class VO(Controller):
 
         testVessel.x = copy.deepcopy(v1.x)
 
-
-        # testVO = self.createVO(testVessel, v2, scanData)
-        # if self.checkNewVO(testVO, testVessel):
-        #     return [testVessel.x[3], testVessel.x[2]]
-
         print('test starboard')
-        testVessel.x[3] = math.sqrt(RV[2][0]**2 + RV[2][1]**2)
+        testVessel.x[3] = np.sqrt(RV[2][0]**2 + RV[2][1]**2)
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[2][1], RV[2][0]))
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO):
@@ -158,7 +135,7 @@ class VO(Controller):
             return newParams
 
         print('test port')
-        testVessel.x[3] = math.sqrt(RV[3][0]**2 + RV[3][1]**2)
+        testVessel.x[3] = np.sqrt(RV[3][0]**2 + RV[3][1]**2)
         testVessel.x[2] = testVessel.x[2] - (np.pi/2 - np.arctan2(RV[3][1],RV[3][0]))
         testVO = self.createVO(testVessel, v2, scanData)
         if self.checkNewVO(testVO):
@@ -197,11 +174,10 @@ class VO(Controller):
             newParams = [testVessel.x[3], testVessel.x[2]]
             return newParams
 
-        print('faaan')
+        print('No RAV found')
         return [0, v1.x[2]]
 
     def checkNewVO(self, VO):
-        # if not VO[3] > VO[8] > VO[4] and not self.checkLand(vessel):
         if not VO[3] > VO[8] > VO[4]:
             return True
         else:

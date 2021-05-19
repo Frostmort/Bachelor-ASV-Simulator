@@ -18,7 +18,7 @@ V_MAX = 1 # Maximum velocity value
 PERSONAL_C = 2.0  # Personal coefficient factor
 SOCIAL_C = 2.0  # Social coefficient factor
 CONVERGENCE = 0  # Convergence value
-MAX_ITER = 200  # Maximum number of iterations
+MAX_ITER = 100  # Maximum number of iterations
 BIGVAL = 10000.
 MINDIST = 20
 
@@ -38,14 +38,14 @@ class Mopso(Controller):
         self.wpUpdated = False
         self.currentcWP = 0
 
-        self.alter = 0
+        self.totalTime = 0
 
         self.particles = []  # List of particles in the swarm
         self.best_pos = None  # Best particle of the swarm
         self.best_pos_z = np.inf  # Best particle of the swarm
 
     def update(self, vobj, world, vesselArray):
-        tic = time.process_time()
+        tic = time.process_time_ns()
         if len(vesselArray) > 1:
             v2 = vesselArray[1]
             scanData = self.scan(vobj.x[0:2], v2.x[0:2])
@@ -61,6 +61,8 @@ class Mopso(Controller):
                     scanData = self.scan(nextWP, v2.x[0:2])
                     nextWP = self.search(nextWP, vesselArray, scanData)
                 self.wpUpdated = True
+                self.totalTime = self.totalTime + (time.process_time_ns() - tic)
+                print(self.totalTime)
 
     def search(self, vobjx, vesselArray, scanData):
 

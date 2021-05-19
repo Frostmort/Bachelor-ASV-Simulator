@@ -59,15 +59,19 @@ class Scenario(object):
             xgf = np.array([250,110,0])
             ppf = PurePursuit(mode='pursuit')
 
-        elif scenname == "VO_test":
+        elif scenname == "nada":
             # Vessel 1 (Main vessel)
             x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
             xg1 = np.array([75, 150, 0])
 
-            # Vessel 2 (WAFI)
-            x02 = np.array([75, 150, -np.pi/2, 2.5, 0, 0])
-            xg2 = np.array([75, 0, 0])
+        elif scenname == "passdiag":
+            # Vessel 1 (Main vessel)
+            x01 = np.array([75, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
 
+            # Vessel 2
+            x0f = np.array([150, 150, 5*np.pi/4, 2.5, 0, 0])
+            xgf = np.array([0, 0, 0])
 
         elif scenname == "passright":
             # Vessel 1 (Main vessel)
@@ -80,15 +84,15 @@ class Scenario(object):
 
         elif scenname == "headon":
             # Vessel 1
-            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
             xg1 = np.array([75, 150, 0])
 
-            # Vessel 2 (WAFI)
+            # Vessel 2
             x02 = np.array([75, 160, 3*np.pi/2, 2.5, 0, 0])
             xg2 = np.array([75, 0, 0])
 
         elif scenname == "standstill":
-            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
             xg1 = np.array([75, 150, 0])
 
             x02 = np.array([75, 80, 3 * np.pi / 2, 0, 0, 0])
@@ -172,21 +176,28 @@ class Scenario(object):
 
 
         elif scenname == "passright":
-
-
             vf = Vessel(x0f,
                         xgf,
                         self.h,
                         self.dT,
                         self.N,
                         [],
-
-
                         is_main_vessel=False,
                         vesseltype='viknes')
             vf.u_d = 2.5
             vessels.append(vf)
 
+        elif scenname == "passdiag":
+            vf = Vessel(x0f,
+                        xgf,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        [],
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            vf.u_d = 3
+            vessels.append(vf)
 
         elif scenname == "headon":
             controllers2 = []
@@ -840,7 +851,7 @@ if __name__ == "__main__":
 
         #map,controller,scene
 
-    scen = Scenario("blank", ["astar", "vopso"], "passright")
+    scen = Scenario("blank", ["astar", "mopso"], "standstill")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

@@ -1,7 +1,5 @@
-import sys, time
-import heapq
+import time
 
-import random
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -18,7 +16,7 @@ V_MAX = 1 # Maximum velocity value
 PERSONAL_C = 2.0  # Personal coefficient factor
 SOCIAL_C = 2.0  # Social coefficient factor
 CONVERGENCE = 0  # Convergence value
-MAX_ITER = 200  # Maximum number of iterations
+MAX_ITER = 100  # Maximum number of iterations
 BIGVAL = 10000.
 MINDIST = 20
 
@@ -39,13 +37,14 @@ class Vopso(Controller):
         self.currentcWP = 0
 
         self.alter = 0
+        self.totalTime = 0
 
         self.particles = []  # List of particles in the swarm
         self.best_pos = None  # Best particle of the swarm
         self.best_pos_z = np.inf  # Best particle of the swarm
 
     def update(self, vobj, world, vesselArray):
-        tic = time.process_time()
+        tic = time.process_time_ns()
         if len(vesselArray) > 1:
             v2 = vesselArray[1]
             resetPoint = -1
@@ -67,6 +66,8 @@ class Vopso(Controller):
                         scanData = self.scan(nextWP, v2.x[0:2])
                         nextWP = self.search(nextWP, vesselArray, scanData, VOarray)
                     self.wpUpdated = True
+                    self.totalTime = self.totalTime + (time.process_time_ns()-tic)
+                    print(self.totalTime)
 
             if vobj.controllers[1].cWP == self.currentcWP + 1:
                 vobj.wp = None
@@ -74,6 +75,8 @@ class Vopso(Controller):
                 vobj.controllers[0].to_be_updated = True
                 vobj.controllers[1].wp_initialized = False
                 self.wpUpdated = False
+                self.totalTime = self.totalTime + (time.process_time_ns() - tic)
+                print(self.totalTime)
 
 
     def search(self, vobjx, vesselArray, scanData, VOarray):
@@ -225,7 +228,7 @@ class Swarm():
             dyn_obs_cost = BIGVAL
         elif 5 < distance <= 10:
             dyn_obs_cost = 100
-        elif 10 < distance <= 20:
+        elif 10 < distance <= 15:
             dyn_obs_cost = 50
         else:
             dyn_obs_cost = 0

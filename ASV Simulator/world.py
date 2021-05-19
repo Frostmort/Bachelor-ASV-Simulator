@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import numpy as np
-import math
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -21,7 +20,7 @@ class World(object):
         self._map = the_map
 
         self._is_collided = False
-        self.minDistance = math.sqrt(the_map._dim[0]**2 + the_map._dim[1]**2)
+        self.minDistance = np.sqrt(the_map._dim[0]**2 + the_map._dim[1]**2)
 
     def get_num_vessels(self):
         return len(self._vessels)
@@ -53,7 +52,7 @@ class World(object):
             v2 = self._vessels[1]
             xd = v2.x[0] - v1.x[0]
             yd = v2.x[1] - v1.x[1]
-            d = math.sqrt(xd**2 + yd**2)
+            d = np.sqrt(xd**2 + yd**2)
             if d < self.minDistance:
                 return d
             else:

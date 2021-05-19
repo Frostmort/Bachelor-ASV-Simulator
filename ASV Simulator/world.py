@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import numpy as np
-import math
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -12,6 +11,8 @@ from matplotlib2tikz import save as tikz_save
 class World(object):
     def __init__(self, vessels, the_map):
         self._vessels = vessels
+        self.n = 0
+        self.t = 0
 
         for v in self._vessels:
             v.world = self
@@ -19,7 +20,7 @@ class World(object):
         self._map = the_map
 
         self._is_collided = False
-        self.minDistance = math.sqrt(the_map._dim[0]**2 + the_map._dim[1]**2)
+        self.minDistance = np.sqrt(the_map._dim[0]**2 + the_map._dim[1]**2)
 
     def get_num_vessels(self):
         return len(self._vessels)
@@ -36,23 +37,28 @@ class World(object):
         self._vessels[0].save_data(n, filename)
 
     def update_world(self, t, n):
+        self.n = n
+        self.t = t
         for v in self._vessels:
             v.time = t
-            v.update_model(n)
+            v.update_model(self.n)
             if int(t*100)%int(v.dT*100) == 0:  # Always true with dT = 0.5
                 v.update_controllers(vesselArray = self._vessels)
         self.minDistance = self.getMinDistance()
 
     def getMinDistance(self):
-        v1 = self._vessels[0]
-        v2 = self._vessels[1]
-        xd = abs(v1.x[0] - v2.x[0])
-        yd = abs(v1.x[1] - v2.x[1])
-        d = math.sqrt(xd**2 + yd**2)
-        if d < self.minDistance:
-            return d
+        if len(self._vessels) > 1:
+            v1 = self._vessels[0]
+            v2 = self._vessels[1]
+            xd = v2.x[0] - v1.x[0]
+            yd = v2.x[1] - v1.x[1]
+            d = np.sqrt(xd**2 + yd**2)
+            if d < self.minDistance:
+                return d
+            else:
+                return self.minDistance
         else:
-            return self.minDistance
+            return 0
 
     def is_occupied_list(self, lst, tlst):
         for ii in range(0,len(lst)):

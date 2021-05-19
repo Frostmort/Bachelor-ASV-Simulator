@@ -19,8 +19,10 @@ from ctrl_PotField import PotentialFields
 from ctrl_astar import AStar
 from ctrl_purepursuit import PurePursuit
 from ctrl_constant_bearing import ConstantBearing
+from ctrl_wafi import Wafi
 from ctrl_VO import VO
-from ctrl_AWC import AWC
+from ctrl_MOPSO import Mopso
+from ctrl_VOPSO import Vopso
 
 from matplotlib2tikz import save as tikz_save
 
@@ -57,14 +59,44 @@ class Scenario(object):
             xgf = np.array([250,110,0])
             ppf = PurePursuit(mode='pursuit')
 
-        elif scenname == "VO_test":
+        elif scenname == "nada":
             # Vessel 1 (Main vessel)
-            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0]) # Starting position x, y, angle & starting acceleration u,v,r
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
             xg1 = np.array([75, 150, 0])
 
-            # Vessel 2 (WAFI)
-            x02 = np.array([150, 80, np.pi, 2.5, 0, 0])
-            xg2 = np.array([0, 80, 0])
+        elif scenname == "passdiag":
+            # Vessel 1 (Main vessel)
+            x01 = np.array([75, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
+
+            # Vessel 2
+            x0f = np.array([150, 150, 5*np.pi/4, 2.5, 0, 0])
+            xgf = np.array([0, 0, 0])
+
+        elif scenname == "passright":
+            # Vessel 1 (Main vessel)
+            x01 = np.array([75, 0.0, np.pi / 2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
+
+            # Vessel 2
+            x0f = np.array([150, 80, np.pi, 2.5, 0, 0])
+            xgf = np.array([0, 80, 0])
+
+        elif scenname == "headon":
+            # Vessel 1
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
+
+            # Vessel 2
+            x02 = np.array([75, 160, 3*np.pi/2, 2.5, 0, 0])
+            xg2 = np.array([75, 0, 0])
+
+        elif scenname == "standstill":
+            x01 = np.array([75, 0.0, np.pi/2, 2.5, 0, 0])
+            xg1 = np.array([75, 150, 0])
+
+            x02 = np.array([75, 80, 3 * np.pi / 2, 0, 0, 0])
+            xg2 = np.array([75, 0, 0])
 
         else:
             # Vessel 1 (Main vessel)
@@ -94,7 +126,15 @@ class Scenario(object):
                 controllers.append(HybridAStar(x01, xg1, the_map))
                 controllers.append(LOSGuidance(switch_criterion="progress"))
 
-        controllers.append(VO())
+            elif name == "mopso":
+                controllers.append(Mopso(x01, xg1, the_map))
+
+            elif name == "VO":
+                controllers.append(VO())
+
+            elif name == "vopso":
+                controllers.append(Vopso(x01, xg1, the_map))
+
         v1 = Vessel(x01,
                     xg1,
                     self.h,
@@ -134,8 +174,58 @@ class Scenario(object):
             v2.u_d = 2.5
             vessels.append(v2)
 
-        self.world = World(vessels, the_map)
 
+        elif scenname == "passright":
+            vf = Vessel(x0f,
+                        xgf,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        [],
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            vf.u_d = 2.5
+            vessels.append(vf)
+
+        elif scenname == "passdiag":
+            vf = Vessel(x0f,
+                        xgf,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        [],
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            vf.u_d = 3
+            vessels.append(vf)
+
+        elif scenname == "headon":
+            controllers2 = []
+            v2 = Vessel(x02,
+                        xg2,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        controllers2,
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            v2.u_d = 2.5
+            vessels.append(v2)
+
+        elif scenname == "standstill":
+            controllers2 = []
+            v2 = Vessel(x02,
+                        xg2,
+                        self.h,
+                        self.dT,
+                        self.N,
+                        controllers2,
+                        is_main_vessel=False,
+                        vesseltype='viknes')
+            v2.u_d = 0
+            vessels.append(v2)
+
+        self.world = World(vessels, the_map)
         return
 
 
@@ -636,6 +726,35 @@ class Scenario(object):
             vobj.waypoints = np.array([(50.,50.), (50., 0.), (100., 100.)])
             self.world = World([vobj], the_map)
 
+        elif name=='wafi':
+            self.tend = 80  # Simulation time (seconds)
+            self.h = 0.05  # Integrator time step
+            self.dT = 0.5  # Controller time step
+            self.N = int(np.around(self.tend / self.h)) + 1
+
+            N2 = int(self.tend / self.dT) + 1
+
+            # Vessel 1 (Main vessel)
+            x01 = np.array([100.0, 0.0, 3.14 / 4, 2.5, 0, 0])
+            xg1 = np.array([80, 145, 0])
+
+            astar = AStar(x01, xg1, the_map)
+            pp = PurePursuit(R2=50)
+
+            vobj = Vessel(x01, xg1, self.h, self.dT, self.N, [astar, pp], is_main_vessel=True, vesseltype='viknes')
+            # v1.goal = np.array([140, 140, 0])
+
+            # Follower
+            x0f = np.array([120., 110, -np.pi, 1.5, 0, 0])
+            xgf = np.array([250, 110, 0])
+
+            pp = Wafi(mode='wafi')
+            pp.cGoal = 0
+            vobj3 = Vessel(x0f, xgf, self.h, self.dT, self.N, [pp], is_main_vessel=False, vesseltype='wafi')
+            vobj3.u_d = 2.5
+
+            self.world = World([vobj, vobj3], the_map)
+
         else:
             print("You might have spelled the scenario name wrong...")
             self.tend = 0
@@ -730,10 +849,9 @@ if __name__ == "__main__":
     #         sim.run_sim()
     #sim  = Simulation(scen, fig, axarr)
 
-
-
         #map,controller,scene
-    scen = Scenario("blank", ["astar"], "VO_test")
+
+    scen = Scenario("blank", ["astar", "mopso"], "standstill")
     sim  = Simulation(scen, savedata=False)
 
     sim.run_sim()

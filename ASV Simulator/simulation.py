@@ -64,13 +64,14 @@ class Simulation(object):
             self.n += 1
 
         arr = [t, time.process_time()-tic]
-        #print("Total simulation CPU time: %.3f"%(time.process_time() - tic))
+        # print("Total simulation CPU time: %.3f"%(time.process_time() - tic))
         arr = self.scenario.world.get_simulation_data(self.n) + arr
 
         print(self.scenario.name)
-        print("Distance\tAvgVel\tVarVel\tVarPsi\tTime\tCPU Time\tShipDelta")
+        print("Distance\tAvgVel\tVarVel\tVarPsi\tMinDist\tTime\tCPU Time")
         s = '\t'.join(format(x,".4f") for x in arr)
         print(s)
+        print()
 
         if self.savedata:
             self.scenario.world.save_data(self.n, self.scenario.name + '-vessel')

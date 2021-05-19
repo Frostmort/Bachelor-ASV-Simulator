@@ -36,8 +36,10 @@ class LOSGuidance(Controller):
             np.abs((self.wp[self.cWP+1][0] - x)*np.cos(self.Xp) + \
                    (self.wp[self.cWP+1][1] - y)*np.sin(self.Xp)) < self.R
 
-    def update(self, vobj, vesselArray):
+    def update(self, vobj, world, vesselArray):
         if not self.wp_initialized:
+            self.wp = None
+            self.cWP = 0
             if vobj.waypoints.any():
                 self.wp = vobj.waypoints
                 self.nWP = len(self.wp[:,0])
@@ -63,7 +65,7 @@ class LOSGuidance(Controller):
                                                                   self.wp[self.cWP][0],
                                                                   self.wp[self.cWP][1]))
                     # print"Next waypoint: (%.2f, %.2f)" % (self.wp[self.cWP+1][0],
-                    #                                        self.wp[self.cWP+1][1])
+                    #                                         # self.wp[self.cWP+1][1])
                     self.cWP += 1
                     vobj.current_goal = self.wp[self.cWP + 1]
                     self.Xp = np.arctan2(self.wp[self.cWP + 1][1] - self.wp[self.cWP][1],
